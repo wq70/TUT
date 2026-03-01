@@ -600,6 +600,11 @@ function loadSettingsToSidebar() {
         const theme = colorThemes[e.theme || 'white_pink'];
         updateBubbleCssPreview(privatePreviewBox, e.customBubbleCss, !e.useCustomBubbleCss, theme);
         populateBubblePresetSelect('bubble-preset-select');
+        const allowCharSwitchCssEl = document.getElementById('setting-allow-char-switch-bubble-css');
+        const bindingsWrap = document.getElementById('bubble-css-theme-bindings-wrap');
+        if (allowCharSwitchCssEl) allowCharSwitchCssEl.checked = !!e.allowCharSwitchBubbleCss;
+        if (bindingsWrap) bindingsWrap.style.display = (e.allowCharSwitchBubbleCss ? 'block' : 'none');
+        populateBubbleThemeBindingsList(e.bubbleCssThemeBindings || []);
         populateMyPersonaSelect();
         if (typeof populateStatusBarPresetSelect === 'function') {
             populateStatusBarPresetSelect();
@@ -660,6 +665,14 @@ async function saveSettingsFromSidebar() {
         e.characterAutoFavoriteEnabled = charAutoFavEl ? charAutoFavEl.checked : false;
         e.useCustomBubbleCss = document.getElementById('setting-use-custom-css').checked;
         e.customBubbleCss = document.getElementById('setting-custom-bubble-css').value;
+        e.allowCharSwitchBubbleCss = document.getElementById('setting-allow-char-switch-bubble-css').checked;
+        e.bubbleCssThemeBindings = collectBubbleThemeBindingsFromDOM();
+        if (e.allowCharSwitchBubbleCss) {
+            const cssTrim = (e.customBubbleCss || '').trim();
+            const presets = _getBubblePresets();
+            const matched = presets.find(p => p.css && (p.css.trim() === cssTrim));
+            e.currentBubbleCssPresetName = matched ? matched.name : '';
+        }
         e.bilingualModeEnabled = document.getElementById('setting-bilingual-mode').checked;
         e.bilingualBubbleStyle = document.getElementById('setting-bilingual-style').value;
         
@@ -1369,6 +1382,62 @@ function populateBubblePresetSelect(selectId) {
     });
 }
 
+function populateBubbleThemeBindingsList(bindings) {
+    const listEl = document.getElementById('bubble-css-theme-bindings-list');
+    const emptyEl = document.getElementById('bubble-css-theme-bindings-empty');
+    if (!listEl || !emptyEl) return;
+    listEl.innerHTML = '';
+    const presets = _getBubblePresets();
+    if (!bindings || bindings.length === 0) {
+        listEl.style.display = 'none';
+        emptyEl.style.display = 'block';
+        return;
+    }
+    listEl.style.display = 'block';
+    emptyEl.style.display = 'none';
+    bindings.forEach((b, idx) => {
+        const row = document.createElement('div');
+        row.className = 'bubble-theme-binding-row';
+        row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border-color,#eee);';
+        row.dataset.presetName = b.presetName;
+        const nameSpan = document.createElement('span');
+        nameSpan.style.cssText = 'min-width:100px;font-weight:500;color:var(--text-color,#333);';
+        nameSpan.textContent = b.presetName;
+        const descInput = document.createElement('input');
+        descInput.type = 'text';
+        descInput.placeholder = '选填描述';
+        descInput.value = b.description || '';
+        descInput.style.cssText = 'flex:1;padding:6px 8px;border-radius:6px;border:1px solid var(--border-color,#eee);font-size:13px;';
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'btn btn-small';
+        delBtn.style.cssText = 'padding:4px 8px;border-radius:6px;color:#c62828;';
+        delBtn.textContent = '移除';
+        delBtn.addEventListener('click', () => {
+            const char = db.characters.find(c => c.id === currentChatId);
+            if (!char) return;
+            if (!Array.isArray(char.bubbleCssThemeBindings)) char.bubbleCssThemeBindings = [];
+            const i = char.bubbleCssThemeBindings.findIndex(x => x.presetName === b.presetName);
+            if (i >= 0) char.bubbleCssThemeBindings.splice(i, 1);
+            populateBubbleThemeBindingsList(char.bubbleCssThemeBindings);
+        });
+        row.appendChild(nameSpan);
+        row.appendChild(descInput);
+        row.appendChild(delBtn);
+        listEl.appendChild(row);
+    });
+}
+
+function collectBubbleThemeBindingsFromDOM() {
+    const listEl = document.getElementById('bubble-css-theme-bindings-list');
+    if (!listEl) return [];
+    const rows = listEl.querySelectorAll('.bubble-theme-binding-row');
+    return Array.from(rows).map(row => ({
+        presetName: row.dataset.presetName || '',
+        description: (row.querySelector('input') && row.querySelector('input').value) ? row.querySelector('input').value.trim() : ''
+    })).filter(b => b.presetName);
+}
+
 async function applyPresetToCurrentChat(presetName) {
     const presets = _getBubblePresets();
     const preset = presets.find(p => p.name === presetName);
@@ -1387,6 +1456,10 @@ async function applyPresetToCurrentChat(presetName) {
         if (chat) {
             chat.customBubbleCss = preset.css;
             chat.useCustomBubbleCss = true;
+            if (currentChatType === 'private') {
+                chat.currentBubbleCssPresetName = presetName;
+                chat.themeJustChangedByUser = presetName;
+            }
             if (currentChatType === 'private') {
                 document.getElementById('setting-use-custom-css').checked = true;
                 document.getElementById('setting-custom-bubble-css').disabled = false;
@@ -1824,6 +1897,53 @@ function setupPresetFeatures() {
         document.getElementById('bubble-presets-modal').style.display = 'none';
     });
 
+    const allowCharSwitchCssCb = document.getElementById('setting-allow-char-switch-bubble-css');
+    const bubbleBindingsWrap = document.getElementById('bubble-css-theme-bindings-wrap');
+    if (allowCharSwitchCssCb && bubbleBindingsWrap) {
+        allowCharSwitchCssCb.addEventListener('change', () => {
+            bubbleBindingsWrap.style.display = allowCharSwitchCssCb.checked ? 'block' : 'none';
+        });
+    }
+    const bubbleAddThemeBtn = document.getElementById('bubble-css-add-theme-binding-btn');
+    const bubbleAddThemeModal = document.getElementById('bubble-add-theme-modal');
+    const bubbleAddThemePresetSelect = document.getElementById('bubble-add-theme-preset-select');
+    const bubbleAddThemeDescInput = document.getElementById('bubble-add-theme-desc-input');
+    const bubbleAddThemeCancelBtn = document.getElementById('bubble-add-theme-cancel-btn');
+    const bubbleAddThemeConfirmBtn = document.getElementById('bubble-add-theme-confirm-btn');
+    if (bubbleAddThemeBtn) bubbleAddThemeBtn.addEventListener('click', () => {
+        const char = db.characters.find(c => c.id === currentChatId);
+        if (!char) return showToast('请先选择角色');
+        const presets = _getBubblePresets();
+        const boundNames = (char.bubbleCssThemeBindings || []).map(b => b.presetName);
+        const available = presets.filter(p => !boundNames.includes(p.name));
+        if (!bubbleAddThemePresetSelect) return;
+        bubbleAddThemePresetSelect.innerHTML = '<option value="">— 选择预设 —</option>';
+        available.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.name;
+            opt.textContent = p.name;
+            bubbleAddThemePresetSelect.appendChild(opt);
+        });
+        if (bubbleAddThemeDescInput) bubbleAddThemeDescInput.value = '';
+        if (bubbleAddThemeModal) bubbleAddThemeModal.style.display = 'flex';
+    });
+    if (bubbleAddThemeCancelBtn) bubbleAddThemeCancelBtn.addEventListener('click', () => {
+        if (bubbleAddThemeModal) bubbleAddThemeModal.style.display = 'none';
+    });
+    if (bubbleAddThemeConfirmBtn) bubbleAddThemeConfirmBtn.addEventListener('click', () => {
+        const presetName = bubbleAddThemePresetSelect && bubbleAddThemePresetSelect.value;
+        if (!presetName) return showToast('请选择预设');
+        const char = db.characters.find(c => c.id === currentChatId);
+        if (!char) return;
+        if (!Array.isArray(char.bubbleCssThemeBindings)) char.bubbleCssThemeBindings = [];
+        char.bubbleCssThemeBindings.push({
+            presetName,
+            description: (bubbleAddThemeDescInput && bubbleAddThemeDescInput.value) ? bubbleAddThemeDescInput.value.trim() : ''
+        });
+        populateBubbleThemeBindingsList(char.bubbleCssThemeBindings);
+        if (bubbleAddThemeModal) bubbleAddThemeModal.style.display = 'none';
+    });
+
     if (groupBubbleApplyBtn) groupBubbleApplyBtn.addEventListener('click', () => {
         const selVal = document.getElementById('group-bubble-preset-select').value;
         if (!selVal) return showToast('请选择要应用的预设');
@@ -1906,6 +2026,48 @@ function setupWallpaperApp() {
                     showToast('壁纸压缩失败');
                 }
             }
+        });
+    }
+
+    // 自定义顶栏颜色
+    const themeColorPicker = document.getElementById('theme-color-picker');
+    const themeColorHex = document.getElementById('theme-color-hex');
+    const themeColorResetBtn = document.getElementById('theme-color-reset-btn');
+    const defaultThemeColor = '#ffffff';
+    const setThemeColorInputs = (hex) => {
+        const h = (hex || defaultThemeColor).trim();
+        if (themeColorPicker) themeColorPicker.value = h;
+        if (themeColorHex) themeColorHex.value = h;
+    };
+    if (themeColorPicker || themeColorHex) {
+        setThemeColorInputs(db.themeColor || defaultThemeColor);
+    }
+    if (themeColorPicker) {
+        themeColorPicker.addEventListener('input', async () => {
+            const hex = themeColorPicker.value;
+            db.themeColor = hex;
+            if (themeColorHex) themeColorHex.value = hex;
+            if (typeof applyThemeColor === 'function') applyThemeColor(hex);
+            await saveData();
+        });
+    }
+    if (themeColorHex) {
+        themeColorHex.addEventListener('change', async () => {
+            let hex = themeColorHex.value.trim();
+            if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) hex = defaultThemeColor;
+            db.themeColor = hex;
+            setThemeColorInputs(hex);
+            if (typeof applyThemeColor === 'function') applyThemeColor(hex);
+            await saveData();
+        });
+    }
+    if (themeColorResetBtn) {
+        themeColorResetBtn.addEventListener('click', async () => {
+            db.themeColor = defaultThemeColor;
+            setThemeColorInputs(defaultThemeColor);
+            if (typeof applyThemeColor === 'function') applyThemeColor(defaultThemeColor);
+            await saveData();
+            showToast('顶栏颜色已恢复默认');
         });
     }
 }
@@ -2240,6 +2402,7 @@ function _saveWidgetWallpaperPresets(arr) {
 function _captureCurrentWidgetWallpaperScheme() {
     return {
         wallpaper: db.wallpaper || DEFAULT_WALLPAPER_URL,
+        themeColor: db.themeColor || '#ffffff',
         homeWidgetSettings: JSON.parse(JSON.stringify(db.homeWidgetSettings || {})),
         homeSignature: db.homeSignature !== undefined ? db.homeSignature : DEFAULT_HOME_SIGNATURE,
         insWidgetSettings: JSON.parse(JSON.stringify(db.insWidgetSettings || DEFAULT_INS_WIDGET)),
@@ -2280,6 +2443,8 @@ function applyWidgetWallpaperPreset(name) {
     if (!p) return showToast('未找到该方案');
     db.wallpaper = p.wallpaper || DEFAULT_WALLPAPER_URL;
     if (typeof applyWallpaper === 'function') applyWallpaper(db.wallpaper);
+    db.themeColor = p.themeColor || '#ffffff';
+    if (typeof applyThemeColor === 'function') applyThemeColor(db.themeColor);
     db.homeWidgetSettings = JSON.parse(JSON.stringify(p.homeWidgetSettings || {}));
     db.homeSignature = p.homeSignature !== undefined ? p.homeSignature : DEFAULT_HOME_SIGNATURE;
     db.insWidgetSettings = JSON.parse(JSON.stringify(p.insWidgetSettings || DEFAULT_INS_WIDGET));
@@ -2393,7 +2558,7 @@ function importWidgetWallpaperScheme(file) {
             const name = preset.name || '导入的方案';
             const presets = _getWidgetWallpaperPresets();
             const existingIdx = presets.findIndex(p => p.name === name);
-            const toAdd = { name, wallpaper: preset.wallpaper, homeWidgetSettings: preset.homeWidgetSettings || {}, homeSignature: preset.homeSignature, insWidgetSettings: preset.insWidgetSettings || {}, customIcons: preset.customIcons || {} };
+            const toAdd = { name, wallpaper: preset.wallpaper, themeColor: preset.themeColor || '#ffffff', homeWidgetSettings: preset.homeWidgetSettings || {}, homeSignature: preset.homeSignature, insWidgetSettings: preset.insWidgetSettings || {}, customIcons: preset.customIcons || {} };
             if (existingIdx >= 0) presets[existingIdx] = toAdd;
             else presets.push(toAdd);
             _saveWidgetWallpaperPresets(presets);
@@ -2413,7 +2578,9 @@ function importWidgetWallpaperScheme(file) {
 function resetWidgetWallpaperToDefault() {
     if (!confirm('确定要恢复默认吗？将清除当前所有小组件、壁纸和应用图标设置。')) return;
     db.wallpaper = DEFAULT_WALLPAPER_URL;
+    db.themeColor = '#ffffff';
     if (typeof applyWallpaper === 'function') applyWallpaper(DEFAULT_WALLPAPER_URL);
+    if (typeof applyThemeColor === 'function') applyThemeColor('#ffffff');
     db.homeWidgetSettings = JSON.parse(JSON.stringify(defaultWidgetSettings));
     db.homeSignature = DEFAULT_HOME_SIGNATURE;
     db.insWidgetSettings = JSON.parse(JSON.stringify(DEFAULT_INS_WIDGET));
@@ -2425,6 +2592,10 @@ function resetWidgetWallpaperToDefault() {
         preview.style.backgroundImage = `url(${DEFAULT_WALLPAPER_URL})`;
         preview.textContent = '';
     }
+    const themeColorPicker = document.getElementById('theme-color-picker');
+    const themeColorHex = document.getElementById('theme-color-hex');
+    if (themeColorPicker) themeColorPicker.value = '#ffffff';
+    if (themeColorHex) themeColorHex.value = '#ffffff';
     renderCustomizeForm();
     showToast('已恢复默认（小组件+壁纸+图标）');
 }

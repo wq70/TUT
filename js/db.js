@@ -158,7 +158,7 @@ const DEFAULT_COT_PRESETS = [
 ];
 
 const globalSettingKeys = [
-    'apiSettings', 'summaryApiSettings', 'backgroundApiSettings', 'supplementPersonaApiSettings', 'wallpaper', 'homeScreenMode', 'fontUrl', 'customIcons',
+    'apiSettings', 'summaryApiSettings', 'backgroundApiSettings', 'supplementPersonaApiSettings', 'wallpaper', 'themeColor', 'homeScreenMode', 'fontUrl', 'customIcons',
     'apiPresets', 'summaryApiPresets', 'backgroundApiPresets', 'supplementPersonaApiPresets', 'bubbleCssPresets', 'myPersonaPresets', 'globalCss',
     'globalCssPresets', 'fontPresets', 'homeSignature', 'forumPosts', 'forumBindings', 'forumUserProfile', 'forumSettings', 'forumApiSettings', 'forumMessages', 'forumStrangerProfiles', 'forumFriendRequests', 'forumPendingRequestFromUser', 'pomodoroTasks', 'pomodoroSettings', 'insWidgetSettings', 'homeWidgetSettings',
     'chatFolders', 'fontSizeScale', 'activePersonaId', 'moreProfileCardBg', 'statusBarPresets', 'themeSettings', 'themePresets', 'savedKeyboardHeight',
@@ -171,6 +171,75 @@ if (typeof window !== 'undefined') window.globalSettingKeysForBackup = globalSet
 
 const appVersion = "1.8.5";
 const updateLog = [
+    {
+        version: "1.8.7",
+        date: "2026-03-01",
+        notes: [
+            "3.1 UWU章鱼机yuan改版更新",
+            "**着重感谢冰镇草莓老师提供的全屏思路！豹豹女神再次优化小剧场。**",
+            "1.新增暂停调用按钮",
+            "2.新增聊天背景重置，全局导出美化新增APP图标",
+            "3.修复接入语音后，文字消息输出太快导致一句话没读完就读下一句的BUG",
+            "4.新增搜索出来的聊天记录可以回顶，聊天设置里也新增了回底回顶",
+            "5.修复TTS把用户声音和角色声音同步了，并新增可配置用户的声音",
+            "6.修复TTS无法暂停的BUG，退出聊天页面即可暂停，二次点击也可暂停",
+            "7.新增直接拍照",
+            "8.新增清理本地图片，新增相册一键清空",
+            "9.新增论坛功能、角色小号，角色可能会用小号接近你",
+            "10.角色可以自主更换导入的CSS主题",
+            "11.查手机会被角色知晓（需在设置里打开）",
+            "12.改掉了双语模式还读翻译的BUG",
+            "一些功能与新APP仍在酝酿中。",
+        ]
+    },
+    {
+        version: "1.8.6",
+        date: "2026-02-28",
+        notes: [
+            "2.28 UWU章鱼机yuan改版更新。感谢豹豹/放假老师、1900老师！",
+            "① 小剧场内容支持分类保存、收藏和编辑，并可分享给任意 char。",
+            "② 角色所在群聊的记忆与私聊互通，可自定义聊天条数及总结范围；群聊中的角色也可选择记忆私聊内容，双向记忆互通。",
+            "1.修复未开启TTS时一直提示TTS未开启，新增可清除选择过的内置音色",
+            "2.论坛私信逻辑：用户评论也会引起NPC注意来私信你",
+            "3.论坛私信可添加为好友，在聊天中一步步补齐私信NPC人设，可配补齐人设副API或手动补齐",
+            "4.新增分享论坛评论",
+            "5.修复全局世界书未自动关联的BUG，世界书分类可删除、条目可选是否启用",
+            "6.小组件和壁纸自定义区域可导入导出方案",
+            "7.新增发送定位，角色也可发送",
+            "8.修复音乐播放与消息提示音冲突",
+            "9.新增来电提示音，需自己上传音频",
+            "10.修复存钱罐存了退回转账的BUG",
+            "11.新增小剧场（感谢豹豹女神）",
+            "12.新增群聊私聊互通（感谢豹豹女神）",
+            "13.商城和存钱罐同步：给角色代付、自己买东西、角色给自己代付都会同步到对应钱包",
+            "14.修复TTS粤语映射错误",
+            "15.导入角色卡有开场白，左右滑动可切换",
+            "16.世界书可导入DOCX、TXT、JSON格式",
+            "17.新增表情包智能匹配",
+            "18.修复论坛专属API保存失效的BUG",
+        ]
+    },
+    {
+        version: "1.8",
+        date: "2026-02-23",
+        notes: [
+            "UwU小章鱼0223改版 对应版本1.8。源代码来源：EE、1900、莫由（论坛功能by莫由），发布前已告知1900。",
+            "1.新增导入DOCX、TXT、ZIP角色，各处可导入DOCX、TXT，表情包DOCX/TXT解析较宽泛",
+            "2.新增语音TTS",
+            "3.新增自动总结、TOKEN分布",
+            "4.新增记忆库存档",
+            "5.调整搜索界面CSS样式",
+            "6.新增收藏功能，可写收藏感想，角色也可自主收藏你的（需自主开启）",
+            "7.查手机小号的帖子可点进去看评论",
+            "8.论坛逻辑：新增私信、评论、点赞、收藏、自己发帖，可自定义配置论坛API",
+            "9.新增两个副API用于总结、后台活动",
+            "10.新增全局世界书",
+            "11.新增查手机「时光想说」：不同年纪USER时CHAR的想法（抒情风）",
+            "12.新增查手机的角色钱包，两种UI界面，点击右上角太阳可切换",
+            "13.新增主角自己的钱包",
+            "导出已同步。还做了一些其他小优化。",
+        ]
+    },
     {
         version: "1.8.5",
         date: "2026-02-18",
@@ -341,6 +410,7 @@ var db = {
     backgroundApiSettings: {},
     supplementPersonaApiSettings: {},
     wallpaper: 'https://i.postimg.cc/W4Z9R9x4/ins-1.jpg',
+    themeColor: '#ffffff',
     myStickers: [],
     homeScreenMode: 'night',
     worldBooks: [],
@@ -649,6 +719,10 @@ const loadData = async () => {
     if (!Array.isArray(db.forumFriendRequests)) db.forumFriendRequests = [];
     if (!db.forumPendingRequestFromUser || typeof db.forumPendingRequestFromUser !== 'object') db.forumPendingRequestFromUser = {};
     if (db.forumSettings && db.forumSettings.generateDetailedStranger === undefined) db.forumSettings.generateDetailedStranger = false;
+    if (db.forumSettings && db.forumSettings.enableCharAltDm === undefined) db.forumSettings.enableCharAltDm = false;
+    if (db.forumSettings && !Array.isArray(db.forumSettings.charAltCharIds)) db.forumSettings.charAltCharIds = [];
+    if (db.forumSettings && db.forumSettings.charAltProbability === undefined) db.forumSettings.charAltProbability = 25;
+    if (db.forumSettings && (db.forumSettings.charAltNames === undefined || typeof db.forumSettings.charAltNames !== 'object')) db.forumSettings.charAltNames = {};
 
     // Data integrity checks
     db.characters.forEach(c => {
@@ -658,6 +732,10 @@ const loadData = async () => {
         if (!c.worldBookIds) c.worldBookIds = [];
         if (c.customBubbleCss === undefined) c.customBubbleCss = '';
         if (c.useCustomBubbleCss === undefined) c.useCustomBubbleCss = false;
+        if (c.allowCharSwitchBubbleCss === undefined) c.allowCharSwitchBubbleCss = false;
+        if (!Array.isArray(c.bubbleCssThemeBindings)) c.bubbleCssThemeBindings = [];
+        if (c.currentBubbleCssPresetName === undefined) c.currentBubbleCssPresetName = '';
+        if (c.themeJustChangedByUser === undefined) c.themeJustChangedByUser = '';
         if (c.showTimestamp === undefined) c.showTimestamp = false;
         if (c.timestampPosition === undefined) c.timestampPosition = 'below_avatar';
         if (!c.statusPanel) {

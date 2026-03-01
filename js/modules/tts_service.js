@@ -398,7 +398,7 @@ const MinimaxTTSService = {
             });
     },
 
-    // 清理文本（移除特殊标记和旁白）
+    // 清理文本（移除特殊标记、旁白、双语翻译）
     cleanText: function(text) {
         if (!text) return '';
         
@@ -407,6 +407,9 @@ const MinimaxTTSService = {
         
         // 移除圆括号和中文括号内容（旁白）
         cleaned = cleaned.replace(/[\(（].*?[\)）]/g, '');
+        
+        // 移除双语模式的「中文翻译」，只读原文
+        cleaned = cleaned.replace(/「.*?」/g, '');
         
         // 移除多余空白
         cleaned = cleaned.trim();

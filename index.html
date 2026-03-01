@@ -638,6 +638,14 @@
                             </div>
                             <span class="expansion-item-name">暂停调用</span>
                         </div>
+                        <div class="expansion-item" id="camera-capture-btn">
+                            <div class="expansion-item-icon">
+                                <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M4 4h3l2-2h6l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm10 10a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm4-6H4v12h16V8z"/>
+                                </svg>
+                            </div>
+                            <span class="expansion-item-name">直接拍照</span>
+                        </div>
                     </div>
                 </div>
 
@@ -1533,6 +1541,17 @@
                 <input type="file"
                     id="wallpaper-upload" accept="image/*" style="display: none;"><label for="wallpaper-upload"
                     class="btn btn-primary">从相册选择新壁纸</label>
+                <div class="theme-color-section" style="margin-top: 20px;">
+                    <label style="display:block; font-size:14px; color:#333; margin-bottom:8px;">自定义顶栏颜色</label>
+                    <p style="font-size:12px; color:#999; margin-bottom:8px;">与壁纸搭配，让 PWA 顶栏/状态栏颜色更统一，达到更好全屏效果</p>
+                    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                        <input type="color" id="theme-color-picker" value="#ffffff"
+                            style="width:48px; height:36px; padding:2px; border-radius:8px; border:1px solid #ddd; cursor:pointer;">
+                        <input type="text" id="theme-color-hex" placeholder="#ffffff"
+                            style="width:90px; padding:8px; border-radius:8px; border:1px solid #ddd; font-size:13px;">
+                        <button type="button" id="theme-color-reset-btn" class="btn btn-secondary">恢复默认</button>
+                    </div>
+                </div>
             </main>
         </div>
         <div id="customize-screen" class="screen">
@@ -2007,6 +2026,7 @@
             </div>
         </div>
         <input type="file" id="image-upload-input" accept="image/*" style="display:none;">
+        <input type="file" id="camera-upload-input" accept="image/*" capture="environment" style="display:none;">
 
         <!-- Profile Card Modal -->
         <div id="profile-card-modal" class="modal-overlay">
@@ -3017,6 +3037,24 @@
                                             style="padding:4px 8px;">管</button>
                                         <button type="button" id="reset-custom-bubble-css-btn"
                                             class="btn btn-small btn-neutral" style="padding:4px 8px;">重置</button>
+                                    </div>
+                                </div>
+                                <div class="kkt-item" style="margin-top:12px;">
+                                    <div class="kkt-item-label">允许角色在对话中自主更换聊天主题</div>
+                                    <div class="kkt-item-control">
+                                        <label class="kkt-switch">
+                                            <input type="checkbox" id="setting-allow-char-switch-bubble-css">
+                                            <span class="kkt-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div id="bubble-css-theme-bindings-wrap" class="kkt-item" style="display:none; margin-top:10px;">
+                                    <div class="bubble-theme-desc-card" style="background:var(--panel-bg-secondary, #f8f9fa); border-radius:12px; padding:14px; border:1px solid var(--border-color, #eee);">
+                                        <div style="font-weight:600; color:var(--text-color, #333); margin-bottom:6px;">描述库</div>
+                                        <p style="font-size:12px; color:#888; margin:0 0 10px 0;">为下方主题填写描述（选填），角色会看到这些描述并在合适时机提议更换<strong>你与TA共用的</strong>对话界面主题。</p>
+                                        <div id="bubble-css-theme-bindings-list" style="max-height:200px; overflow:auto;"></div>
+                                        <div id="bubble-css-theme-bindings-empty" style="display:none; text-align:center; padding:16px; color:#999; font-size:13px;">暂无主题，添加后角色可在对话中看到并主动更换</div>
+                                        <button type="button" id="bubble-css-add-theme-binding-btn" class="btn btn-small btn-primary" style="margin-top:10px; border-radius:8px;">+ 添加主题</button>
                                     </div>
                                 </div>
                             </div>
@@ -4172,6 +4210,33 @@
                         </div>
                     </div>
                     <div class="kkt-group">
+                        <div class="kkt-group-title">角色小号私信</div>
+                        <div class="kkt-item">
+                            <div class="kkt-item-label">允许角色用小号私信你</div>
+                            <div class="kkt-item-control">
+                                <label class="kkt-switch">
+                                    <input type="checkbox" id="forum-char-alt-enable">
+                                    <span class="kkt-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <p style="font-size:12px;color:#888;margin:4px 0 8px 0;">开启后，生成陌生人私信时有机会刷到已选角色的小号；加好友后仍以小号身份聊天，可能露马脚或揭穿。</p>
+                        <div id="forum-char-alt-options" style="display:none;">
+                            <div class="kkt-item" style="flex-direction:column;align-items:stretch;">
+                                <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                                    <div class="kkt-item-label">小号出现占比</div>
+                                    <span id="forum-char-alt-prob-value" style="color:var(--primary-color);font-weight:bold;">25%</span>
+                                </div>
+                                <input type="range" id="forum-char-alt-prob-slider" min="0" max="100" value="25" style="width:100%;accent-color:var(--primary-color);">
+                                <p style="font-size:12px;color:#999;margin-top:4px;margin-bottom:8px;">在每次生成的陌生人私信中，约有多少条来自角色小号（可多条、来自不同角色）。</p>
+                            </div>
+                            <div class="kkt-item" style="flex-direction:column;align-items:stretch;">
+                                <div class="kkt-item-label" style="margin-bottom:6px;">可选小号的角色（多选）</div>
+                                <ul id="forum-char-alt-list" class="forum-char-alt-list" style="list-style:none;padding:0;margin:0;max-height:200px;overflow-y:auto;border:1px solid #eee;border-radius:8px;padding:8px;"></ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="kkt-group">
                         <button class="btn btn-primary" id="save-forum-settings-btn" style="width:100%;">保存设置</button>
                     </div>
                 </div>
@@ -4721,6 +4786,11 @@
                             <input type="checkbox" id="peek-unlock-comments-enabled" style="width: auto;">
                             <label for="peek-unlock-comments-enabled" style="margin: 0;">查手机时自动生成小号帖子下的评论</label>
                         </div>
+                        <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="peek-char-aware-peek-enabled" style="width: auto;">
+                            <label for="peek-char-aware-peek-enabled" style="margin: 0;">角色知晓用户窥屏</label>
+                        </div>
+                        <p style="font-size: 12px; color: #888; margin: 4px 0 0 0;">开启后，若用户偷看了你的手机并点进了某些应用，你会知道用户看了哪些应用以及其中的内容，并可以据此在对话中自然反应。</p>
                     </div>
                 </div>
                 <div class="collapsible-section">
@@ -5388,6 +5458,24 @@
                     class="btn btn-primary" style="padding:8px 12px;border-radius:8px;">关闭</button></div>
         </div>
     </div>
+    <div id="bubble-add-theme-modal" class="modal-overlay"
+        style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.35);justify-content:center;align-items:center;z-index:10000;">
+        <div class="modal-window" style="max-width:400px;background:var(--panel-bg,#fff);padding:16px;border-radius:12px;box-shadow:0 12px 36px rgba(10,10,20,0.12);">
+            <h3 style="margin:0 0 12px 0;font-size:15px;">添加对话主题</h3>
+            <div style="margin-bottom:10px;">
+                <label style="font-size:13px;color:#666;">选择预设</label>
+                <select id="bubble-add-theme-preset-select" style="width:100%;margin-top:4px;padding:8px;border-radius:8px;border:1px solid var(--border-color,#eee);"></select>
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="font-size:13px;color:#666;">描述（选填，给角色看）</label>
+                <input type="text" id="bubble-add-theme-desc-input" placeholder="例如：温馨、夜晚氛围" style="width:100%;margin-top:4px;padding:8px;border-radius:8px;border:1px solid var(--border-color,#eee);box-sizing:border-box;">
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;">
+                <button type="button" id="bubble-add-theme-cancel-btn" class="btn btn-neutral" style="padding:8px 14px;border-radius:8px;">取消</button>
+                <button type="button" id="bubble-add-theme-confirm-btn" class="btn btn-primary" style="padding:8px 14px;border-radius:8px;">添加</button>
+            </div>
+        </div>
+    </div>
     <div id="mypersona-presets-modal" class="modal-overlay"
         style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.35);justify-content:center;align-items:center;z-index:9999;">
         <div class="modal-window"
@@ -5561,7 +5649,8 @@
                 <p class="placeholder-text" style="text-align: center; color: #999; margin-top: 20px;">相册空空如也~</p>
             </div>
 
-            <div style="margin-top: 5px; text-align: right;">
+            <div style="margin-top: 5px; display: flex; justify-content: flex-end; gap: 10px;">
+                <button id="clear-gallery-btn" class="btn btn-danger">一键清空</button>
                 <button id="close-gallery-modal-btn" class="btn btn-neutral">关闭</button>
             </div>
         </div>

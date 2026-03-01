@@ -454,6 +454,7 @@ function setupHomeScreen() {
 
     updateClock();
     applyWallpaper(db.wallpaper);
+    if (typeof applyThemeColor === 'function') applyThemeColor(db.themeColor || '#ffffff');
     applyHomeScreenMode(db.homeScreenMode);
     
     document.getElementById('day-mode-btn')?.addEventListener('click', (e) => {
@@ -660,6 +661,11 @@ function updatePageIndicator(index) {
 
 function applyWallpaper(url) {
     if (homeScreen) homeScreen.style.backgroundImage = `url(${url})`;
+}
+
+function applyThemeColor(hex) {
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta && hex) meta.setAttribute('content', hex);
 }
 
 async function applyHomeScreenMode(mode) {
