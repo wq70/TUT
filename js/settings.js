@@ -2001,12 +2001,18 @@ function setupWallpaperApp() {
     if (resetBtn) {
         resetBtn.addEventListener('click', async () => {
             db.wallpaper = DEFAULT_WALLPAPER_URL;
+            db.headerBarColor = '';
             applyWallpaper(DEFAULT_WALLPAPER_URL);
+            if (typeof applyHeaderBarColor === 'function') applyHeaderBarColor('');
             if (t) {
                 t.style.backgroundImage = `url(${DEFAULT_WALLPAPER_URL})`;
                 t.textContent = '';
             }
             if (e) e.value = '';
+            const colorInput = document.getElementById('header-bar-color');
+            const hexInput = document.getElementById('header-bar-color-hex');
+            if (colorInput) colorInput.value = '#ffffff';
+            if (hexInput) hexInput.value = '';
             await saveData();
             showToast('已恢复默认壁纸');
         });
@@ -2028,46 +2034,46 @@ function setupWallpaperApp() {
             }
         });
     }
-
-    // 自定义顶栏颜色
-    const themeColorPicker = document.getElementById('theme-color-picker');
-    const themeColorHex = document.getElementById('theme-color-hex');
-    const themeColorResetBtn = document.getElementById('theme-color-reset-btn');
-    const defaultThemeColor = '#ffffff';
-    const setThemeColorInputs = (hex) => {
-        const h = (hex || defaultThemeColor).trim();
-        if (themeColorPicker) themeColorPicker.value = h;
-        if (themeColorHex) themeColorHex.value = h;
-    };
-    if (themeColorPicker || themeColorHex) {
-        setThemeColorInputs(db.themeColor || defaultThemeColor);
-    }
-    if (themeColorPicker) {
-        themeColorPicker.addEventListener('input', async () => {
-            const hex = themeColorPicker.value;
-            db.themeColor = hex;
-            if (themeColorHex) themeColorHex.value = hex;
-            if (typeof applyThemeColor === 'function') applyThemeColor(hex);
-            await saveData();
+    // 顶栏颜色
+    const colorInput = document.getElementById('header-bar-color');
+    const hexInput = document.getElementById('header-bar-color-hex');
+    if (colorInput && hexInput) {
+        if (db.headerBarColor) {
+            const v = db.headerBarColor.trim();
+            if (v.startsWith('#')) {
+                colorInput.value = v;
+                hexInput.value = v;
+            } else {
+                hexInput.value = v;
+            }
+        }
+        colorInput.addEventListener('input', () => {
+            const hex = colorInput.value;
+            hexInput.value = hex;
+            db.headerBarColor = hex;
+            if (typeof applyHeaderBarColor === 'function') applyHeaderBarColor(hex);
+            saveData();
         });
-    }
-    if (themeColorHex) {
-        themeColorHex.addEventListener('change', async () => {
-            let hex = themeColorHex.value.trim();
-            if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) hex = defaultThemeColor;
-            db.themeColor = hex;
-            setThemeColorInputs(hex);
-            if (typeof applyThemeColor === 'function') applyThemeColor(hex);
-            await saveData();
-        });
-    }
-    if (themeColorResetBtn) {
-        themeColorResetBtn.addEventListener('click', async () => {
-            db.themeColor = defaultThemeColor;
-            setThemeColorInputs(defaultThemeColor);
-            if (typeof applyThemeColor === 'function') applyThemeColor(defaultThemeColor);
-            await saveData();
-            showToast('顶栏颜色已恢复默认');
+        hexInput.addEventListener('change', () => {
+            const raw = hexInput.value.trim();
+            if (!raw) {
+                db.headerBarColor = '';
+                if (typeof applyHeaderBarColor === 'function') applyHeaderBarColor('');
+                colorInput.value = '#ffffff';
+                saveData();
+                return;
+            }
+            if (/^#[0-9A-Fa-f]{3,8}$/.test(raw)) {
+                colorInput.value = raw;
+                db.headerBarColor = raw;
+            } else if (/^rgba?\(/.test(raw)) {
+                db.headerBarColor = raw;
+            } else {
+                showToast('请输入 #hex 或 rgba(...) 格式');
+                return;
+            }
+            if (typeof applyHeaderBarColor === 'function') applyHeaderBarColor(db.headerBarColor);
+            saveData();
         });
     }
 }
@@ -2402,7 +2408,6 @@ function _saveWidgetWallpaperPresets(arr) {
 function _captureCurrentWidgetWallpaperScheme() {
     return {
         wallpaper: db.wallpaper || DEFAULT_WALLPAPER_URL,
-        themeColor: db.themeColor || '#ffffff',
         homeWidgetSettings: JSON.parse(JSON.stringify(db.homeWidgetSettings || {})),
         homeSignature: db.homeSignature !== undefined ? db.homeSignature : DEFAULT_HOME_SIGNATURE,
         insWidgetSettings: JSON.parse(JSON.stringify(db.insWidgetSettings || DEFAULT_INS_WIDGET)),
@@ -2443,8 +2448,6 @@ function applyWidgetWallpaperPreset(name) {
     if (!p) return showToast('未找到该方案');
     db.wallpaper = p.wallpaper || DEFAULT_WALLPAPER_URL;
     if (typeof applyWallpaper === 'function') applyWallpaper(db.wallpaper);
-    db.themeColor = p.themeColor || '#ffffff';
-    if (typeof applyThemeColor === 'function') applyThemeColor(db.themeColor);
     db.homeWidgetSettings = JSON.parse(JSON.stringify(p.homeWidgetSettings || {}));
     db.homeSignature = p.homeSignature !== undefined ? p.homeSignature : DEFAULT_HOME_SIGNATURE;
     db.insWidgetSettings = JSON.parse(JSON.stringify(p.insWidgetSettings || DEFAULT_INS_WIDGET));
@@ -2558,7 +2561,7 @@ function importWidgetWallpaperScheme(file) {
             const name = preset.name || '导入的方案';
             const presets = _getWidgetWallpaperPresets();
             const existingIdx = presets.findIndex(p => p.name === name);
-            const toAdd = { name, wallpaper: preset.wallpaper, themeColor: preset.themeColor || '#ffffff', homeWidgetSettings: preset.homeWidgetSettings || {}, homeSignature: preset.homeSignature, insWidgetSettings: preset.insWidgetSettings || {}, customIcons: preset.customIcons || {} };
+            const toAdd = { name, wallpaper: preset.wallpaper, homeWidgetSettings: preset.homeWidgetSettings || {}, homeSignature: preset.homeSignature, insWidgetSettings: preset.insWidgetSettings || {}, customIcons: preset.customIcons || {} };
             if (existingIdx >= 0) presets[existingIdx] = toAdd;
             else presets.push(toAdd);
             _saveWidgetWallpaperPresets(presets);
@@ -2578,9 +2581,9 @@ function importWidgetWallpaperScheme(file) {
 function resetWidgetWallpaperToDefault() {
     if (!confirm('确定要恢复默认吗？将清除当前所有小组件、壁纸和应用图标设置。')) return;
     db.wallpaper = DEFAULT_WALLPAPER_URL;
-    db.themeColor = '#ffffff';
+    db.headerBarColor = '';
     if (typeof applyWallpaper === 'function') applyWallpaper(DEFAULT_WALLPAPER_URL);
-    if (typeof applyThemeColor === 'function') applyThemeColor('#ffffff');
+    if (typeof applyHeaderBarColor === 'function') applyHeaderBarColor('');
     db.homeWidgetSettings = JSON.parse(JSON.stringify(defaultWidgetSettings));
     db.homeSignature = DEFAULT_HOME_SIGNATURE;
     db.insWidgetSettings = JSON.parse(JSON.stringify(DEFAULT_INS_WIDGET));
@@ -2592,10 +2595,10 @@ function resetWidgetWallpaperToDefault() {
         preview.style.backgroundImage = `url(${DEFAULT_WALLPAPER_URL})`;
         preview.textContent = '';
     }
-    const themeColorPicker = document.getElementById('theme-color-picker');
-    const themeColorHex = document.getElementById('theme-color-hex');
-    if (themeColorPicker) themeColorPicker.value = '#ffffff';
-    if (themeColorHex) themeColorHex.value = '#ffffff';
+    const colorInput = document.getElementById('header-bar-color');
+    const hexInput = document.getElementById('header-bar-color-hex');
+    if (colorInput) colorInput.value = '#ffffff';
+    if (hexInput) hexInput.value = '';
     renderCustomizeForm();
     showToast('已恢复默认（小组件+壁纸+图标）');
 }
@@ -3220,7 +3223,7 @@ function renderCustomizeForm() {
     const iconOrder = [
         'chat-list-screen', 'api-settings-screen', 'wallpaper-screen',
         'world-book-screen', 'customize-screen', 'tutorial-screen',
-        'day-mode-btn', 'night-mode-btn', 'forum-screen', 'music-screen', 'diary-screen', 'piggy-bank-screen', 'pomodoro-screen', 'storage-analysis-screen', 'theater-screen'
+        'day-mode-btn', 'night-mode-btn', 'forum-screen', 'music-screen', 'diary-screen', 'piggy-bank-screen', 'pomodoro-screen', 'storage-analysis-screen', 'appearance-settings-screen', 'theater-screen'
     ];
 
     let iconsContentHTML = '';
