@@ -551,7 +551,6 @@ function loadSettingsToSidebar() {
         };
 
         document.getElementById('setting-bubble-blur').checked = e.bubbleBlurEnabled !== false; 
-        document.getElementById('setting-input-expand').checked = e.inputExpandEnabled || false;
 
         document.getElementById('setting-title-layout').value = e.titleLayout || 'left';
         document.getElementById('setting-show-timestamp').checked = e.showTimestamp || false;
@@ -699,8 +698,6 @@ async function saveSettingsFromSidebar() {
         e.avatarRadius = parseInt(document.getElementById('setting-avatar-radius').value, 10);
 
         e.bubbleBlurEnabled = document.getElementById('setting-bubble-blur').checked;
-        e.inputExpandEnabled = document.getElementById('setting-input-expand').checked;
-        applyInputExpand(e.inputExpandEnabled);
         const chatScreen = document.getElementById('chat-room-screen');
         if (e.bubbleBlurEnabled) {
             chatScreen.classList.remove('disable-blur');
@@ -2070,7 +2067,7 @@ function setupWallpaperApp() {
     // 音乐播放器壁纸（在壁纸APP中管理）
     setupMusicWallpaperInWallpaperScreen();
     // 顶栏颜色自定义
-    setupStatusBarColor();
+    setupHeaderBarColor();
 }
 
 function setupMusicWallpaperInWallpaperScreen() {
@@ -2163,76 +2160,102 @@ function setupMusicWallpaperInWallpaperScreen() {
     }
 }
 
-// --- 顶栏颜色自定义 ---
-const STATUSBAR_COLOR_KEY = 'ovo_statusbar_color';
+// ===== 顶栏颜色自定义 =====
+const DEFAULT_HEADER_BAR = { bgColor: '#ffffff', bgOpacity: 80, textColor: '#000000', showBorder: true };
 
-function getStatusBarColor() {
-    try { return localStorage.getItem(STATUSBAR_COLOR_KEY) || '#ffffff'; } catch (_) { return '#ffffff'; }
+function applyHeaderBarColor(settings) {
+    const s = settings || db.headerBarColor || DEFAULT_HEADER_BAR;
+    const r = parseInt(s.bgColor.slice(1, 3), 16);
+    const g = parseInt(s.bgColor.slice(3, 5), 16);
+    const b = parseInt(s.bgColor.slice(5, 7), 16);
+    const a = (s.bgOpacity ?? 80) / 100;
+
+    document.documentElement.style.setProperty('--header-bg-color', `rgba(${r},${g},${b},${a})`);
+    document.documentElement.style.setProperty('--header-text-color', s.textColor || '#000000');
+    document.documentElement.style.setProperty('--header-border', s.showBorder ? '1px solid #eee' : 'none');
+
+    // 同步更新 meta theme-color
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', s.bgColor);
 }
 
-function applyStatusBarColor(color) {
-    // 更新 meta theme-color
-    let meta = document.querySelector('meta[name="theme-color"]');
-    if (!meta) {
-        meta = document.createElement('meta');
-        meta.name = 'theme-color';
-        document.head.appendChild(meta);
+function setupHeaderBarColor() {
+    const bgColorPicker = document.getElementById('header-bg-color');
+    const bgColorText = document.getElementById('header-bg-color-text');
+    const bgOpacity = document.getElementById('header-bg-opacity');
+    const opacityValue = document.getElementById('header-bg-opacity-value');
+    const textColorPicker = document.getElementById('header-text-color');
+    const textColorText = document.getElementById('header-text-color-text');
+    const borderToggle = document.getElementById('header-border-toggle');
+    const resetBtn = document.getElementById('header-color-reset-btn');
+
+    if (!bgColorPicker) return;
+
+    const s = db.headerBarColor || { ...DEFAULT_HEADER_BAR };
+
+    // 初始化控件值
+    bgColorPicker.value = s.bgColor || '#ffffff';
+    bgColorText.value = s.bgColor || '#ffffff';
+    bgOpacity.value = s.bgOpacity ?? 80;
+    opacityValue.textContent = (s.bgOpacity ?? 80) + '%';
+    textColorPicker.value = s.textColor || '#000000';
+    textColorText.value = s.textColor || '#000000';
+    borderToggle.checked = s.showBorder !== false;
+
+    applyHeaderBarColor(s);
+
+    async function save() {
+        db.headerBarColor = {
+            bgColor: bgColorPicker.value,
+            bgOpacity: parseInt(bgOpacity.value),
+            textColor: textColorPicker.value,
+            showBorder: borderToggle.checked
+        };
+        applyHeaderBarColor(db.headerBarColor);
+        await saveData();
     }
-    meta.setAttribute('content', color);
-}
 
-function setupStatusBarColor() {
-    const picker = document.getElementById('statusbar-color-picker');
-    const hexLabel = document.getElementById('statusbar-color-hex');
-    const presetsContainer = document.getElementById('statusbar-color-presets');
-    const resetBtn = document.getElementById('statusbar-color-reset-btn');
-    if (!picker) return;
-
-    const saved = getStatusBarColor();
-    picker.value = saved;
-    if (hexLabel) hexLabel.textContent = saved;
-    applyStatusBarColor(saved);
-
-    function updatePresetHighlight(color) {
-        if (!presetsContainer) return;
-        presetsContainer.querySelectorAll('.statusbar-preset-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.color.toLowerCase() === color.toLowerCase());
-        });
-    }
-    updatePresetHighlight(saved);
-
-    picker.addEventListener('input', function () {
-        const c = this.value;
-        if (hexLabel) hexLabel.textContent = c;
-        applyStatusBarColor(c);
-        updatePresetHighlight(c);
-        try { localStorage.setItem(STATUSBAR_COLOR_KEY, c); } catch (_) {}
+    bgColorPicker.addEventListener('input', () => {
+        bgColorText.value = bgColorPicker.value;
+        save();
     });
+    bgColorText.addEventListener('change', () => {
+        const v = bgColorText.value.trim();
+        if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+            bgColorPicker.value = v;
+            save();
+        }
+    });
+    bgOpacity.addEventListener('input', () => {
+        opacityValue.textContent = bgOpacity.value + '%';
+        save();
+    });
+    textColorPicker.addEventListener('input', () => {
+        textColorText.value = textColorPicker.value;
+        save();
+    });
+    textColorText.addEventListener('change', () => {
+        const v = textColorText.value.trim();
+        if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+            textColorPicker.value = v;
+            save();
+        }
+    });
+    borderToggle.addEventListener('change', save);
 
-    if (presetsContainer) {
-        presetsContainer.addEventListener('click', function (e) {
-            const btn = e.target.closest('.statusbar-preset-btn');
-            if (!btn) return;
-            const c = btn.dataset.color;
-            picker.value = c;
-            if (hexLabel) hexLabel.textContent = c;
-            applyStatusBarColor(c);
-            updatePresetHighlight(c);
-            try { localStorage.setItem(STATUSBAR_COLOR_KEY, c); } catch (_) {}
-        });
-    }
-
-    if (resetBtn) {
-        resetBtn.addEventListener('click', function () {
-            const def = '#ffffff';
-            picker.value = def;
-            if (hexLabel) hexLabel.textContent = def;
-            applyStatusBarColor(def);
-            updatePresetHighlight(def);
-            try { localStorage.setItem(STATUSBAR_COLOR_KEY, def); } catch (_) {}
-            showToast('已重置顶栏颜色');
-        });
-    }
+    resetBtn.addEventListener('click', async () => {
+        db.headerBarColor = { ...DEFAULT_HEADER_BAR };
+        bgColorPicker.value = DEFAULT_HEADER_BAR.bgColor;
+        bgColorText.value = DEFAULT_HEADER_BAR.bgColor;
+        bgOpacity.value = DEFAULT_HEADER_BAR.bgOpacity;
+        opacityValue.textContent = DEFAULT_HEADER_BAR.bgOpacity + '%';
+        textColorPicker.value = DEFAULT_HEADER_BAR.textColor;
+        textColorText.value = DEFAULT_HEADER_BAR.textColor;
+        borderToggle.checked = DEFAULT_HEADER_BAR.showBorder;
+        applyHeaderBarColor(DEFAULT_HEADER_BAR);
+        await saveData();
+        showToast('顶栏颜色已恢复默认');
+    });
 }
 
 function populateGlobalCssPresetSelect() {
@@ -4258,8 +4281,6 @@ function exportTTSPresets() {
 // 在页面加载时填充 TTS 预设列表，并绑定气泡样式「导入文档」（委托到 document，因按钮在 chat/group-settings-form 内）
 document.addEventListener('DOMContentLoaded', () => {
     populateTTSPresetSelect();
-    // 页面加载时立即应用保存的顶栏颜色
-    applyStatusBarColor(getStatusBarColor());
 
     document.addEventListener('click', (e) => {
         if (e.target.matches('#bubble-css-import-doc-btn')) {

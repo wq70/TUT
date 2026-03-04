@@ -355,66 +355,55 @@ input:checked + .kkt-slider:before {
 }
 
 /* 顶栏颜色自定义 */
-.statusbar-color-desc {
-    font-size: 12px;
-    color: #888;
-    margin: 0 0 14px;
-    line-height: 1.5;
+.header-color-settings {
+    background: #f8f9fa;
+    border-radius: 10px;
+    border: 1px solid #e9ecef;
+    padding: 12px 14px;
 }
 
-.statusbar-color-row {
+.header-color-row {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 14px;
+    justify-content: space-between;
+    padding: 8px 0;
 }
 
-.statusbar-color-label {
+.header-color-row:not(:last-child) {
+    border-bottom: 1px solid #e9ecef;
+}
+
+.header-color-row label {
     font-size: 13px;
     color: var(--text-color, #333);
-    white-space: nowrap;
+    flex-shrink: 0;
 }
 
-.statusbar-color-input {
-    width: 40px;
-    height: 40px;
-    border: 2px solid #e2e8f0;
-    border-radius: 10px;
+.header-color-input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-color-input-group input[type="color"] {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
     padding: 2px;
     cursor: pointer;
     background: none;
 }
 
-.statusbar-color-hex {
+.header-color-hex {
+    width: 72px;
     font-size: 13px;
-    color: #666;
-    font-family: monospace;
-}
-
-.statusbar-color-presets {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 4px;
-}
-
-.statusbar-preset-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: 2px solid #e2e8f0;
-    cursor: pointer;
-    transition: transform 0.15s, box-shadow 0.15s;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-}
-
-.statusbar-preset-btn:active {
-    transform: scale(0.92);
-}
-
-.statusbar-preset-btn.active {
-    border-color: var(--primary-color, #6C8CD5);
-    box-shadow: 0 0 0 2px rgba(108, 140, 213, 0.35);
+    padding: 4px 8px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    text-align: center;
+    color: #333;
+    background: #fff;
 }
 
 /* 音乐上传弹窗 */

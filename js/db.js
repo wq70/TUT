@@ -159,7 +159,7 @@ const DEFAULT_COT_PRESETS = [
 ];
 
 const globalSettingKeys = [
-    'apiSettings', 'summaryApiSettings', 'backgroundApiSettings', 'supplementPersonaApiSettings', 'wallpaper', 'homeScreenMode', 'fontUrl', 'customIcons', 'customAppNames', 'namePresets',
+    'apiSettings', 'summaryApiSettings', 'backgroundApiSettings', 'supplementPersonaApiSettings', 'wallpaper', 'headerBarColor', 'homeScreenMode', 'fontUrl', 'customIcons', 'customAppNames', 'namePresets',
     'apiPresets', 'summaryApiPresets', 'backgroundApiPresets', 'supplementPersonaApiPresets', 'bubbleCssPresets', 'myPersonaPresets', 'globalCss',
     'globalCssPresets', 'fontPresets', 'homeSignature', 'forumPosts', 'forumBindings', 'forumUserProfile', 'forumSettings', 'forumApiSettings', 'forumMessages', 'forumStrangerProfiles', 'forumFriendRequests', 'forumPendingRequestFromUser', 'pomodoroTasks', 'pomodoroSettings', 'insWidgetSettings', 'homeWidgetSettings',
     'chatFolders', 'fontSizeScale', 'activePersonaId', 'moreProfileCardBg', 'statusBarPresets', 'regexFilterPresets', 'themeSettings', 'themePresets', 'savedKeyboardHeight',
@@ -461,6 +461,7 @@ var db = {
     backgroundApiSettings: {},
     supplementPersonaApiSettings: {},
     wallpaper: 'https://i.postimg.cc/W4Z9R9x4/ins-1.jpg',
+    headerBarColor: { bgColor: '#ffffff', bgOpacity: 80, textColor: '#000000', showBorder: true },
     myStickers: [],
     homeScreenMode: 'night',
     worldBooks: [],
@@ -618,6 +619,7 @@ function initDatabase() {
                 summaryApiSettings: data.summaryApiSettings || {},
                 backgroundApiSettings: data.backgroundApiSettings || {},
                 wallpaper: data.wallpaper || 'https://i.postimg.cc/W4Z9R9x4/ins-1.jpg',
+                headerBarColor: data.headerBarColor || { bgColor: '#ffffff', bgOpacity: 80, textColor: '#000000', showBorder: true },
                 homeScreenMode: data.homeScreenMode || 'night',
                 fontUrl: data.fontUrl || '',
                 customIcons: data.customIcons || {},
@@ -715,6 +717,7 @@ const loadData = async () => {
             backgroundApiSettings: {},
             supplementPersonaApiSettings: {},
             wallpaper: 'https://i.postimg.cc/W4Z9R9x4/ins-1.jpg',
+            headerBarColor: { bgColor: '#ffffff', bgOpacity: 80, textColor: '#000000', showBorder: true },
             homeScreenMode: 'night',
             fontUrl: '',
             customIcons: {},

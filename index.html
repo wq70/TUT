@@ -473,7 +473,7 @@
                         </svg>
                     </button>
                     <div class="input-wrapper">
-                        <textarea id="message-input" autocomplete="off" placeholder="" rows="1"></textarea>
+                        <input type="text" id="message-input" autocomplete="off" placeholder="">
                         <button id="sticker-toggle-btn" class="icon-btn input-inner-btn">
                             <img src="https://i.postimg.cc/prRC31Gk/retouch-2025110902080890.png" alt="表情">
                         </button>
@@ -1790,23 +1790,40 @@
 
                 <!-- 顶栏颜色自定义 -->
                 <div class="wallpaper-section-label" style="margin-top:28px;">顶栏颜色</div>
-                <p class="statusbar-color-desc">自定义顶部状态栏颜色，配合壁纸实现更好的全屏沉浸效果。</p>
-                <div class="statusbar-color-row">
-                    <label class="statusbar-color-label" for="statusbar-color-picker">选择颜色</label>
-                    <input type="color" id="statusbar-color-picker" class="statusbar-color-input" value="#ffffff">
-                    <span class="statusbar-color-hex" id="statusbar-color-hex">#ffffff</span>
+                <p style="font-size:12px; color:#999; margin:0 0 12px 0;">自定义顶部导航栏颜色，配合壁纸获得更好的全屏效果</p>
+                <div class="header-color-settings">
+                    <div class="header-color-row">
+                        <label for="header-bg-color">背景颜色</label>
+                        <div class="header-color-input-group">
+                            <input type="color" id="header-bg-color" value="#ffffff">
+                            <input type="text" id="header-bg-color-text" class="header-color-hex" placeholder="#ffffff" maxlength="7">
+                        </div>
+                    </div>
+                    <div class="header-color-row">
+                        <label for="header-bg-opacity">背景透明度</label>
+                        <div class="header-color-input-group">
+                            <input type="range" id="header-bg-opacity" min="0" max="100" value="80" style="flex:1;">
+                            <span id="header-bg-opacity-value" style="min-width:36px; text-align:right; font-size:13px; color:#666;">80%</span>
+                        </div>
+                    </div>
+                    <div class="header-color-row">
+                        <label for="header-text-color">文字颜色</label>
+                        <div class="header-color-input-group">
+                            <input type="color" id="header-text-color" value="#000000">
+                            <input type="text" id="header-text-color-text" class="header-color-hex" placeholder="#000000" maxlength="7">
+                        </div>
+                    </div>
+                    <div class="header-color-row">
+                        <label for="header-border-toggle">显示底部边框</label>
+                        <label class="kkt-switch kkt-switch-small">
+                            <input type="checkbox" id="header-border-toggle" checked>
+                            <span class="kkt-slider"></span>
+                        </label>
+                    </div>
                 </div>
-                <div class="statusbar-color-presets" id="statusbar-color-presets">
-                    <button type="button" class="statusbar-preset-btn" data-color="#ffffff" style="background:#ffffff;" title="#ffffff"></button>
-                    <button type="button" class="statusbar-preset-btn" data-color="#000000" style="background:#000000;" title="#000000"></button>
-                    <button type="button" class="statusbar-preset-btn" data-color="#1e293b" style="background:#1e293b;" title="#1e293b"></button>
-                    <button type="button" class="statusbar-preset-btn" data-color="#f8fafc" style="background:#f8fafc;" title="#f8fafc"></button>
-                    <button type="button" class="statusbar-preset-btn" data-color="#fce4ec" style="background:#fce4ec;" title="#fce4ec"></button>
-                    <button type="button" class="statusbar-preset-btn" data-color="#e8eaf6" style="background:#e8eaf6;" title="#e8eaf6"></button>
-                    <button type="button" class="statusbar-preset-btn" data-color="#e0f2f1" style="background:#e0f2f1;" title="#e0f2f1"></button>
-                    <button type="button" class="statusbar-preset-btn" data-color="#fff8e1" style="background:#fff8e1;" title="#fff8e1"></button>
+                <div class="wallpaper-music-actions" style="margin-top:12px;">
+                    <button type="button" id="header-color-reset-btn" class="btn btn-secondary">恢复默认</button>
                 </div>
-                <button type="button" id="statusbar-color-reset-btn" class="btn btn-secondary" style="margin-top:10px;">重置为默认白色</button>
             </main>
         </div>
         <div id="customize-screen" class="screen">
@@ -3379,15 +3396,6 @@
                                         </label>
                                     </div>
                                 </div>
-                                <div class="kkt-item">
-                                    <div class="kkt-item-label">输入框增高</div>
-                                    <div class="kkt-item-control">
-                                        <label class="kkt-switch">
-                                            <input type="checkbox" id="setting-input-expand">
-                                            <span class="kkt-slider"></span>
-                                        </label>
-                                    </div>
-                                </div>
                                 <div class="kkt-item"
                                     style="flex-direction: column; align-items: stretch; padding-bottom: 15px;">
                                     <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
@@ -4216,15 +4224,6 @@
                                         <option value="center">居中</option>
                                     </select>
                                     <span class="kkt-arrow">›</span>
-                                </div>
-                            </div>
-                            <div class="kkt-item">
-                                <div class="kkt-item-label">输入框增高</div>
-                                <div class="kkt-item-control">
-                                    <label class="kkt-switch">
-                                        <input type="checkbox" id="setting-group-input-expand">
-                                        <span class="kkt-slider"></span>
-                                    </label>
                                 </div>
                             </div>
                             <div class="kkt-item"
