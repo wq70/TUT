@@ -159,7 +159,7 @@ const DEFAULT_COT_PRESETS = [
 ];
 
 const globalSettingKeys = [
-    'apiSettings', 'summaryApiSettings', 'backgroundApiSettings', 'supplementPersonaApiSettings', 'wallpaper', 'headerBarColor', 'homeScreenMode', 'fontUrl', 'customIcons', 'customAppNames', 'namePresets',
+    'apiSettings', 'summaryApiSettings', 'backgroundApiSettings', 'supplementPersonaApiSettings', 'wallpaper', 'homeScreenMode', 'fontUrl', 'customIcons', 'customAppNames', 'namePresets',
     'apiPresets', 'summaryApiPresets', 'backgroundApiPresets', 'supplementPersonaApiPresets', 'bubbleCssPresets', 'myPersonaPresets', 'globalCss',
     'globalCssPresets', 'fontPresets', 'homeSignature', 'forumPosts', 'forumBindings', 'forumUserProfile', 'forumSettings', 'forumApiSettings', 'forumMessages', 'forumStrangerProfiles', 'forumFriendRequests', 'forumPendingRequestFromUser', 'pomodoroTasks', 'pomodoroSettings', 'insWidgetSettings', 'homeWidgetSettings',
     'chatFolders', 'fontSizeScale', 'activePersonaId', 'moreProfileCardBg', 'statusBarPresets', 'regexFilterPresets', 'themeSettings', 'themePresets', 'savedKeyboardHeight',
@@ -172,8 +172,20 @@ const globalSettingKeys = [
 ];
 if (typeof window !== 'undefined') window.globalSettingKeysForBackup = globalSettingKeys;
 
-const appVersion = "3.4";
+const appVersion = "3.5";
 const updateLog = [
+    {
+        version: "3.5",
+        date: "2026-03-05",
+        notes: [
+            "3.5微量更新：",
+            "1.修复了群聊记忆互通的BUG（豹豹老师修）",
+            "2.加了小剧场分类导入导出和预设保存可选择同步保存人设世界书等等（豹豹老师加）",
+            "3.修复TTS开关问题，修复TTS国际版问题",
+            "4.删掉了自动揭露",
+            "5.新增了真实摄像头，视频通话可以看到真实的你的样子（没有人许愿这个，但是！我想做就做了！）"
+        ]
+    },
     {
         version: "3.4",
         date: "2026-03-04",
@@ -461,7 +473,6 @@ var db = {
     backgroundApiSettings: {},
     supplementPersonaApiSettings: {},
     wallpaper: 'https://i.postimg.cc/W4Z9R9x4/ins-1.jpg',
-    headerBarColor: { bgColor: '#ffffff', bgOpacity: 80, textColor: '#000000', showBorder: true },
     myStickers: [],
     homeScreenMode: 'night',
     worldBooks: [],
@@ -619,7 +630,6 @@ function initDatabase() {
                 summaryApiSettings: data.summaryApiSettings || {},
                 backgroundApiSettings: data.backgroundApiSettings || {},
                 wallpaper: data.wallpaper || 'https://i.postimg.cc/W4Z9R9x4/ins-1.jpg',
-                headerBarColor: data.headerBarColor || { bgColor: '#ffffff', bgOpacity: 80, textColor: '#000000', showBorder: true },
                 homeScreenMode: data.homeScreenMode || 'night',
                 fontUrl: data.fontUrl || '',
                 customIcons: data.customIcons || {},
@@ -717,7 +727,6 @@ const loadData = async () => {
             backgroundApiSettings: {},
             supplementPersonaApiSettings: {},
             wallpaper: 'https://i.postimg.cc/W4Z9R9x4/ins-1.jpg',
-            headerBarColor: { bgColor: '#ffffff', bgOpacity: 80, textColor: '#000000', showBorder: true },
             homeScreenMode: 'night',
             fontUrl: '',
             customIcons: {},
