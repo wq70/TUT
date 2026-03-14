@@ -2931,6 +2931,79 @@ function setupPresetFeatures() {
 
 const DEFAULT_WALLPAPER_URL = 'https://i.postimg.cc/W4Z9R9x4/ins-1.jpg';
 
+const DEFAULT_HEADER_BAR = { bgHex: '#ffffff', bgOpacity: 80, textColor: '#333333', showBorder: true };
+
+function hexToRgb(hex) {
+    if (!hex || !/^#[0-9A-Fa-f]{6}$/.test(hex)) return { r: 255, g: 255, b: 255 };
+    return {
+        r: parseInt(hex.slice(1, 3), 16),
+        g: parseInt(hex.slice(3, 5), 16),
+        b: parseInt(hex.slice(5, 7), 16)
+    };
+}
+
+function applyHeaderBarSettings() {
+    const s = db.headerBarSettings || { ...DEFAULT_HEADER_BAR };
+    const rgb = hexToRgb(s.bgHex);
+    const bg = `rgba(${rgb.r},${rgb.g},${rgb.b},${(s.bgOpacity ?? 80) / 100})`;
+    document.documentElement.style.setProperty('--header-bg', bg);
+    document.documentElement.style.setProperty('--header-text-color', s.textColor || DEFAULT_HEADER_BAR.textColor);
+    document.documentElement.style.setProperty('--header-border-bottom', s.showBorder !== false ? '1px solid #eee' : 'none');
+}
+
+function setupHeaderBarSettings() {
+    if (!db.headerBarSettings) db.headerBarSettings = { ...DEFAULT_HEADER_BAR };
+    const s = db.headerBarSettings;
+    const bgColor = document.getElementById('header-bar-bg-color');
+    const bgHex = document.getElementById('header-bar-bg-hex');
+    const opacitySlider = document.getElementById('header-bar-bg-opacity');
+    const opacityValue = document.getElementById('header-bar-opacity-value');
+    const textColor = document.getElementById('header-bar-text-color');
+    const textHex = document.getElementById('header-bar-text-hex');
+    const showBorder = document.getElementById('header-bar-show-border');
+    const resetBtn = document.getElementById('header-bar-reset-btn');
+
+    function syncToForm() {
+        if (bgColor) bgColor.value = s.bgHex;
+        if (bgHex) bgHex.value = s.bgHex;
+        if (opacitySlider) opacitySlider.value = s.bgOpacity ?? 80;
+        if (opacityValue) opacityValue.textContent = s.bgOpacity ?? 80;
+        if (textColor) textColor.value = s.textColor;
+        if (textHex) textHex.value = s.textColor;
+        if (showBorder) showBorder.checked = s.showBorder !== false;
+    }
+
+    function saveAndApply() {
+        applyHeaderBarSettings();
+        if (typeof saveData === 'function') saveData();
+    }
+
+    syncToForm();
+
+    if (bgColor) bgColor.addEventListener('input', () => { s.bgHex = bgColor.value; if (bgHex) bgHex.value = bgColor.value; saveAndApply(); });
+    if (bgHex) bgHex.addEventListener('input', () => {
+        const v = bgHex.value.trim();
+        if (/^#[0-9A-Fa-f]{6}$/.test(v)) { s.bgHex = v; if (bgColor) bgColor.value = v; saveAndApply(); }
+    });
+    if (opacitySlider) opacitySlider.addEventListener('input', () => {
+        s.bgOpacity = parseInt(opacitySlider.value, 10);
+        if (opacityValue) opacityValue.textContent = s.bgOpacity;
+        saveAndApply();
+    });
+    if (textColor) textColor.addEventListener('input', () => { s.textColor = textColor.value; if (textHex) textHex.value = textColor.value; saveAndApply(); });
+    if (textHex) textHex.addEventListener('input', () => {
+        const v = textHex.value.trim();
+        if (/^#[0-9A-Fa-f]{6}$/.test(v)) { s.textColor = v; if (textColor) textColor.value = v; saveAndApply(); }
+    });
+    if (showBorder) showBorder.addEventListener('change', () => { s.showBorder = showBorder.checked; saveAndApply(); });
+    if (resetBtn) resetBtn.addEventListener('click', () => {
+        db.headerBarSettings = { ...DEFAULT_HEADER_BAR };
+        syncToForm();
+        saveAndApply();
+        showToast('已恢复默认顶栏样式');
+    });
+}
+
 function setupWallpaperApp() {
     const e = document.getElementById('wallpaper-upload'), t = document.getElementById('wallpaper-preview');
     if (t) {
@@ -2970,6 +3043,8 @@ function setupWallpaperApp() {
     }
     // 音乐播放器壁纸（在壁纸APP中管理）
     setupMusicWallpaperInWallpaperScreen();
+    // 顶栏样式（配合壁纸全屏）
+    setupHeaderBarSettings();
 }
 
 function setupMusicWallpaperInWallpaperScreen() {

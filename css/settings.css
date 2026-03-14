@@ -362,6 +362,78 @@ input:checked + .kkt-slider:before {
     gap: 10px;
 }
 
+/* 顶栏样式设置 */
+.header-bar-settings {
+    padding: 14px 16px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border: 1px solid #e9ecef;
+}
+
+.header-bar-row {
+    margin-bottom: 14px;
+}
+
+.header-bar-row:last-of-type {
+    margin-bottom: 12px;
+}
+
+.header-bar-label {
+    display: block;
+    font-size: 13px;
+    color: var(--text-color, #333);
+    margin-bottom: 6px;
+}
+
+.header-bar-color-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.header-bar-color-picker {
+    width: 44px;
+    height: 36px;
+    padding: 2px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    background: #fff;
+}
+
+.header-bar-hex-input {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: monospace;
+}
+
+.header-bar-opacity-slider {
+    width: 100%;
+    height: 8px;
+    margin-top: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #e0e0e0;
+    border-radius: 4px;
+}
+
+.header-bar-opacity-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--primary-color, #e91e8c);
+    cursor: pointer;
+}
+
+.header-bar-settings #header-bar-reset-btn {
+    margin-top: 4px;
+}
+
 /* 音乐上传弹窗 */
 .music-upload-tabs {
     display: flex;

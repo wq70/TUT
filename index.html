@@ -528,7 +528,6 @@
                             <img src="https://i.postimg.cc/prRC31Gk/retouch-2025110902080890.png" alt="表情">
                         </button>
                     </div>
-                    <button id="ai-mode-toggle-btn" class="icon-btn circle-bg" type="button" title="切换 AI 助手 / AI 伙伴">AI 助手</button>
                     <button id="get-reply-btn" class="icon-btn">
                         <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <circle cx="12" cy="12" r="12" fill="#F0F0F0" />
@@ -2391,6 +2390,35 @@
                 <input type="file"
                     id="wallpaper-upload" accept="image/*" style="display: none;"><label for="wallpaper-upload"
                     class="btn btn-primary">从相册选择新壁纸</label>
+
+                <!-- 顶栏样式（配合壁纸全屏） -->
+                <div class="wallpaper-section-label" style="margin-top:28px;">顶栏样式</div>
+                <div class="header-bar-settings">
+                    <div class="header-bar-row">
+                        <label class="header-bar-label">顶栏背景颜色</label>
+                        <div class="header-bar-color-row">
+                            <input type="color" id="header-bar-bg-color" class="header-bar-color-picker" value="#ffffff" title="选择颜色">
+                            <input type="text" id="header-bar-bg-hex" class="header-bar-hex-input" placeholder="#ffffff" maxlength="7">
+                        </div>
+                    </div>
+                    <div class="header-bar-row">
+                        <label class="header-bar-label">背景透明度 <span id="header-bar-opacity-value">80</span>%</label>
+                        <input type="range" id="header-bar-bg-opacity" class="header-bar-opacity-slider" min="0" max="100" value="80">
+                    </div>
+                    <div class="header-bar-row">
+                        <label class="header-bar-label">文字颜色</label>
+                        <div class="header-bar-color-row">
+                            <input type="color" id="header-bar-text-color" class="header-bar-color-picker" value="#333333" title="选择颜色">
+                            <input type="text" id="header-bar-text-hex" class="header-bar-hex-input" placeholder="#333333" maxlength="7">
+                        </div>
+                    </div>
+                    <div class="header-bar-row">
+                        <label class="header-bar-label">
+                            <input type="checkbox" id="header-bar-show-border" checked> 显示底部边框
+                        </label>
+                    </div>
+                    <button type="button" id="header-bar-reset-btn" class="btn btn-secondary">恢复默认</button>
+                </div>
 
                 <!-- 音乐播放器壁纸 -->
                 <div class="wallpaper-section-label" style="margin-top:28px;">音乐播放器壁纸</div>
