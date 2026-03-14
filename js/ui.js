@@ -465,7 +465,6 @@ function setupHomeScreen() {
 
     updateClock();
     applyWallpaper(db.wallpaper);
-    if (typeof applyHeaderBarSettings === 'function') applyHeaderBarSettings();
     applyHomeScreenMode(db.homeScreenMode);
     
     document.getElementById('day-mode-btn')?.addEventListener('click', (e) => {

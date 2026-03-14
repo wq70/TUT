@@ -2931,76 +2931,109 @@ function setupPresetFeatures() {
 
 const DEFAULT_WALLPAPER_URL = 'https://i.postimg.cc/W4Z9R9x4/ins-1.jpg';
 
-const DEFAULT_HEADER_BAR = { bgHex: '#ffffff', bgOpacity: 80, textColor: '#333333', showBorder: true };
+const DEFAULT_HEADER_BAR = {
+    bgColor: '#ffffff',
+    bgOpacity: 80,
+    textColor: '#000000',
+    showBorder: true
+};
 
-function hexToRgb(hex) {
-    if (!hex || !/^#[0-9A-Fa-f]{6}$/.test(hex)) return { r: 255, g: 255, b: 255 };
-    return {
-        r: parseInt(hex.slice(1, 3), 16),
-        g: parseInt(hex.slice(3, 5), 16),
-        b: parseInt(hex.slice(5, 7), 16)
-    };
+function hexToRgba(hex, alpha) {
+    const m = hex.replace(/^#/, '').match(/^([0-9a-f]{3}|[0-9a-f]{6})$/i);
+    if (!m) return 'rgba(255,255,255,' + alpha + ')';
+    let r, g, b;
+    if (m[1].length === 3) {
+        r = parseInt(m[1][0] + m[1][0], 16);
+        g = parseInt(m[1][1] + m[1][1], 16);
+        b = parseInt(m[1][2] + m[1][2], 16);
+    } else {
+        r = parseInt(m[1].slice(0, 2), 16);
+        g = parseInt(m[1].slice(2, 4), 16);
+        b = parseInt(m[1].slice(4, 6), 16);
+    }
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
 }
 
-function applyHeaderBarSettings() {
-    const s = db.headerBarSettings || { ...DEFAULT_HEADER_BAR };
-    const rgb = hexToRgb(s.bgHex);
-    const bg = `rgba(${rgb.r},${rgb.g},${rgb.b},${(s.bgOpacity ?? 80) / 100})`;
-    document.documentElement.style.setProperty('--header-bg', bg);
-    document.documentElement.style.setProperty('--header-text-color', s.textColor || DEFAULT_HEADER_BAR.textColor);
-    document.documentElement.style.setProperty('--header-border-bottom', s.showBorder !== false ? '1px solid #eee' : 'none');
+function applyHeaderBarStyle() {
+    const root = document.documentElement;
+    const h = db.headerBar;
+    if (!h || typeof h !== 'object') {
+        root.style.removeProperty('--header-bg');
+        root.style.removeProperty('--header-text-color');
+        root.style.removeProperty('--header-border');
+        return;
+    }
+    const opacity = Math.min(100, Math.max(0, Number(h.bgOpacity) || 80)) / 100;
+    const bgHex = (h.bgColor && /^#[0-9a-f]{3,8}$/i.test(h.bgColor)) ? h.bgColor : DEFAULT_HEADER_BAR.bgColor;
+    root.style.setProperty('--header-bg', hexToRgba(bgHex, opacity));
+    root.style.setProperty('--header-text-color', (h.textColor && /^#[0-9a-f]{3,8}$/i.test(h.textColor)) ? h.textColor : DEFAULT_HEADER_BAR.textColor);
+    root.style.setProperty('--header-border', h.showBorder !== false ? '1px solid #eee' : 'none');
 }
 
-function setupHeaderBarSettings() {
-    if (!db.headerBarSettings) db.headerBarSettings = { ...DEFAULT_HEADER_BAR };
-    const s = db.headerBarSettings;
+function setupHeaderBarControls() {
     const bgColor = document.getElementById('header-bar-bg-color');
     const bgHex = document.getElementById('header-bar-bg-hex');
-    const opacitySlider = document.getElementById('header-bar-bg-opacity');
-    const opacityValue = document.getElementById('header-bar-opacity-value');
+    const bgOpacity = document.getElementById('header-bar-bg-opacity');
+    const opacityValue = document.getElementById('header-bar-bg-opacity-value');
     const textColor = document.getElementById('header-bar-text-color');
     const textHex = document.getElementById('header-bar-text-hex');
     const showBorder = document.getElementById('header-bar-show-border');
     const resetBtn = document.getElementById('header-bar-reset-btn');
 
-    function syncToForm() {
-        if (bgColor) bgColor.value = s.bgHex;
-        if (bgHex) bgHex.value = s.bgHex;
-        if (opacitySlider) opacitySlider.value = s.bgOpacity ?? 80;
-        if (opacityValue) opacityValue.textContent = s.bgOpacity ?? 80;
-        if (textColor) textColor.value = s.textColor;
-        if (textHex) textHex.value = s.textColor;
-        if (showBorder) showBorder.checked = s.showBorder !== false;
+    function getHeaderBarFromForm() {
+        const hex = (v) => (v && /^#[0-9a-f]{3,8}$/i.test(v.trim()) ? v.trim() : null);
+        return {
+            bgColor: hex(bgHex.value) || (bgColor ? bgColor.value : DEFAULT_HEADER_BAR.bgColor),
+            bgOpacity: Math.min(100, Math.max(0, parseInt(bgOpacity.value, 10) || 80)),
+            textColor: hex(textHex.value) || (textColor ? textColor.value : DEFAULT_HEADER_BAR.textColor),
+            showBorder: showBorder ? showBorder.checked : true
+        };
+    }
+
+    function setFormFromHeaderBar(h) {
+        const o = h || DEFAULT_HEADER_BAR;
+        const bg = o.bgColor || DEFAULT_HEADER_BAR.bgColor;
+        const txt = o.textColor || DEFAULT_HEADER_BAR.textColor;
+        if (bgColor) bgColor.value = bg;
+        if (bgHex) bgHex.value = bg;
+        if (bgOpacity) bgOpacity.value = String(o.bgOpacity !== undefined ? o.bgOpacity : 80);
+        if (opacityValue) opacityValue.textContent = (bgOpacity ? bgOpacity.value : 80) + '%';
+        if (textColor) textColor.value = txt;
+        if (textHex) textHex.value = txt;
+        if (showBorder) showBorder.checked = o.showBorder !== false;
     }
 
     function saveAndApply() {
-        applyHeaderBarSettings();
+        db.headerBar = getHeaderBarFromForm();
+        applyHeaderBarStyle();
         if (typeof saveData === 'function') saveData();
     }
 
-    syncToForm();
+    setFormFromHeaderBar(db.headerBar);
+    applyHeaderBarStyle();
 
-    if (bgColor) bgColor.addEventListener('input', () => { s.bgHex = bgColor.value; if (bgHex) bgHex.value = bgColor.value; saveAndApply(); });
-    if (bgHex) bgHex.addEventListener('input', () => {
-        const v = bgHex.value.trim();
-        if (/^#[0-9A-Fa-f]{6}$/.test(v)) { s.bgHex = v; if (bgColor) bgColor.value = v; saveAndApply(); }
-    });
-    if (opacitySlider) opacitySlider.addEventListener('input', () => {
-        s.bgOpacity = parseInt(opacitySlider.value, 10);
-        if (opacityValue) opacityValue.textContent = s.bgOpacity;
+    if (bgColor) bgColor.addEventListener('input', function () { if (bgHex) bgHex.value = this.value; saveAndApply(); });
+    if (bgHex) bgHex.addEventListener('input', function () {
+        const v = this.value.trim();
+        if (/^#[0-9a-f]{3,8}$/i.test(v) && bgColor) bgColor.value = v;
         saveAndApply();
     });
-    if (textColor) textColor.addEventListener('input', () => { s.textColor = textColor.value; if (textHex) textHex.value = textColor.value; saveAndApply(); });
-    if (textHex) textHex.addEventListener('input', () => {
-        const v = textHex.value.trim();
-        if (/^#[0-9A-Fa-f]{6}$/.test(v)) { s.textColor = v; if (textColor) textColor.value = v; saveAndApply(); }
-    });
-    if (showBorder) showBorder.addEventListener('change', () => { s.showBorder = showBorder.checked; saveAndApply(); });
-    if (resetBtn) resetBtn.addEventListener('click', () => {
-        db.headerBarSettings = { ...DEFAULT_HEADER_BAR };
-        syncToForm();
+    if (bgOpacity) {
+        bgOpacity.addEventListener('input', function () { if (opacityValue) opacityValue.textContent = this.value + '%'; saveAndApply(); });
+    }
+    if (textColor) textColor.addEventListener('input', function () { if (textHex) textHex.value = this.value; saveAndApply(); });
+    if (textHex) textHex.addEventListener('input', function () {
+        const v = this.value.trim();
+        if (/^#[0-9a-f]{3,8}$/i.test(v) && textColor) textColor.value = v;
         saveAndApply();
-        showToast('已恢复默认顶栏样式');
+    });
+    if (showBorder) showBorder.addEventListener('change', saveAndApply);
+    if (resetBtn) resetBtn.addEventListener('click', async function () {
+        db.headerBar = null;
+        setFormFromHeaderBar(null);
+        applyHeaderBarStyle();
+        if (typeof saveData === 'function') await saveData();
+        if (typeof showToast === 'function') showToast('已恢复默认顶栏样式');
     });
 }
 
@@ -3041,10 +3074,10 @@ function setupWallpaperApp() {
             }
         });
     }
+    // 顶栏样式（在壁纸页内配置）
+    setupHeaderBarControls();
     // 音乐播放器壁纸（在壁纸APP中管理）
     setupMusicWallpaperInWallpaperScreen();
-    // 顶栏样式（配合壁纸全屏）
-    setupHeaderBarSettings();
 }
 
 function setupMusicWallpaperInWallpaperScreen() {
