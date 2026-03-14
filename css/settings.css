@@ -189,6 +189,14 @@ input:checked + .kkt-slider:before {
     background-color: #f5f5f5;
 }
 
+.block-trigger-btn {
+    color: #007aff !important;
+}
+
+.block-settings-panel .kkt-danger-btn {
+    margin-top: 8px;
+}
+
 
 /* 群聊设置页面的成员列表样式适配 */
 #group-settings-screen .group-member,
@@ -352,96 +360,6 @@ input:checked + .kkt-slider:before {
     color: var(--text-color, #333);
     cursor: pointer;
     gap: 10px;
-}
-
-/* 顶栏自定义 */
-.headerbar-settings-card {
-    background: #fff;
-    border-radius: 14px;
-    border: 1px solid #e2e8f0;
-    padding: 16px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-}
-
-.headerbar-setting-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 0;
-    border-bottom: 1px solid #f1f5f9;
-}
-
-.headerbar-setting-row:last-of-type {
-    border-bottom: none;
-}
-
-.headerbar-setting-label {
-    font-size: 14px;
-    color: var(--text-color, #333);
-    flex-shrink: 0;
-}
-
-.headerbar-color-group {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.headerbar-color-picker {
-    width: 32px;
-    height: 32px;
-    border: 2px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 1px;
-    cursor: pointer;
-    background: none;
-}
-
-.headerbar-hex-input {
-    width: 80px;
-    font-size: 13px;
-    padding: 6px 8px;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    text-align: center;
-    font-family: monospace;
-    color: var(--text-color, #333);
-    background: #f8fafc;
-}
-
-.headerbar-slider-group {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex: 1;
-    max-width: 200px;
-}
-
-.headerbar-slider {
-    flex: 1;
-    -webkit-appearance: none;
-    appearance: none;
-    height: 4px;
-    border-radius: 2px;
-    background: #e2e8f0;
-    outline: none;
-}
-
-.headerbar-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: var(--primary-color, #6C8CD5);
-    cursor: pointer;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
-}
-
-.headerbar-slider-val {
-    font-size: 13px;
-    color: var(--text-secondary, #64748b);
-    min-width: 36px;
-    text-align: right;
 }
 
 /* 音乐上传弹窗 */
