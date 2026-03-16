@@ -1429,7 +1429,7 @@ function renderTutorialContent() {
         tutorialContentArea.appendChild(clearDataBtn);
     }
 
-    // 反馈许愿 (Between Us) - 放在云端备份下面，样式与云端备份卡片一致（白底、无粉色）
+    // 匿名许愿 (Between Us) - 放在云端备份下面，样式与云端备份卡片一致（白底、无粉色）
     const feedbackSection = document.createElement('a');
     feedbackSection.href = 'https://betweenus.today/creator/yuanyuan';
     feedbackSection.target = '_blank';
@@ -1443,10 +1443,16 @@ function renderTutorialContent() {
                     ${iconMessage}
                 </div>
                 <div style="flex:1; min-width:0;">
-                    <div style="color:${isRabbit ? '#444' : '#333'}; font-weight:500; font-size:${isRabbit ? '15px' : '0.89rem'}; margin-bottom:2px;">反馈 · 许愿</div>
+                    <div style="color:${isRabbit ? '#444' : '#333'}; font-weight:500; font-size:${isRabbit ? '15px' : '0.89rem'}; margin-bottom:2px;">匿名许愿</div>
                     <div style="font-size:0.81rem; color:#888;">匿名投喂 BUG / 想法 / 愿望，完全保密</div>
                 </div>
                 <svg style="width:14px; height:14px; color:#999; flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </div>
+            <div style="margin-top:8px; padding:8px 12px; background:${isRabbit ? '#fdf8f9' : (isModern ? '#f9f9f9' : '#fffbe6')}; border-radius:6px; border-left:3px solid ${isRabbit ? '#e8dfe1' : (isModern ? '#ddd' : '#ffe58f')};">
+                <div style="font-size:0.75rem; color:#999; line-height:1.5;">⚠️ 单向发送：此渠道为匿名许愿，作者的回复您将无法看到。如需查看回复，请使用下方公开许愿。</div>
+            </div>
+            <div style="margin-top:6px; padding:8px 12px; background:${isRabbit ? '#fdf8f9' : (isModern ? '#f9f9f9' : '#fff7e6')}; border-radius:6px; border-left:3px solid ${isRabbit ? '#e8dfe1' : (isModern ? '#ddd' : '#ffd591')};">
+                <div style="font-size:0.75rem; color:#999; line-height:1.5;">💡 提交后如果显示错误，这是网站本身的问题，实际上已经成功提交了，请放心。</div>
             </div>
         </div>
     `;
@@ -1458,6 +1464,47 @@ function renderTutorialContent() {
         const card = this.querySelector('div');
         if (card) card.style.opacity = '';
     };
+
+    // 公开许愿（金山文档）
+    const publicFeedbackSection = document.createElement('div');
+    publicFeedbackSection.style.cssText = 'margin-top:12px;';
+    const iconDoc = `<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`;
+    const kdocsUrl = 'https://www.kdocs.cn/l/csKWtfIfdwDy';
+    publicFeedbackSection.innerHTML = `
+        <div class="${isModern ? 'tutorial-modern-gh-card' : (isRabbit ? 'tutorial-rabbit-card' : 'btn-white')}" style="${isModern || isRabbit ? '' : 'display:block; cursor:default; background:#fff; border:1px solid #e0e0e0; border-radius:8px; padding:12px;'}">
+            <div style="display:flex; align-items:center; gap:12px; padding:${isRabbit ? '12px 20px' : '0'};">
+                <div style="width:40px; height:40px; border-radius:8px; background:${isRabbit ? '#f0f5f1' : (isModern ? '#f0f5f1' : '#f0f8f0')}; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:#67c23a;">
+                    ${iconDoc}
+                </div>
+                <div style="flex:1; min-width:0;">
+                    <div style="color:${isRabbit ? '#444' : '#333'}; font-weight:500; font-size:${isRabbit ? '15px' : '0.89rem'}; margin-bottom:2px;">公开许愿</div>
+                    <div style="font-size:0.81rem; color:#888;">在金山文档中查看许愿与回复</div>
+                </div>
+            </div>
+            <div style="margin-top:10px; padding:${isRabbit ? '0 20px 16px' : '10px 0 0 0'}; border-top:1px solid ${isRabbit ? '#fcfafb' : '#f5f5f5'};">
+                <div style="font-size:0.78rem; color:#999; margin-bottom:8px; line-height:1.5;">📋 公开许愿收集表（金山文档 | WPS云文档）<br>可复制链接到金山文档APP或浏览器中打开，许愿内容公开可见，作者回复也能看到。</div>
+                <div style="display:flex; gap:8px;">
+                    <a href="${kdocsUrl}" target="_blank" rel="noopener noreferrer" style="flex:1; display:block; text-align:center; padding:8px; border-radius:4px; font-size:0.85rem; text-decoration:none; background:${isModern ? '#000' : (isRabbit ? '#f5f0f1' : '#67c23a')}; color:${isRabbit ? '#555' : '#fff'}; cursor:pointer;">打开链接</a>
+                    <div id="kdocs-copy-btn" style="flex:1; text-align:center; padding:8px; border-radius:4px; font-size:0.85rem; background:${isRabbit ? '#fff' : '#f5f5f5'}; color:#666; border:${isRabbit ? '1px solid #f0eaeb' : '1px solid #eee'}; cursor:pointer;">复制链接</div>
+                </div>
+            </div>
+        </div>
+    `;
+    publicFeedbackSection.querySelector('#kdocs-copy-btn').addEventListener('click', () => {
+        navigator.clipboard.writeText(kdocsUrl).then(() => {
+            showToast('链接已复制，可粘贴到金山文档APP中打开');
+        }).catch(() => {
+            // fallback
+            const ta = document.createElement('textarea');
+            ta.value = kdocsUrl;
+            ta.style.cssText = 'position:fixed;left:-9999px;';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            showToast('链接已复制，可粘贴到金山文档APP中打开');
+        });
+    });
 
     // GitHub Backup UI
     const githubSection = document.createElement('div');
@@ -1532,9 +1579,11 @@ function renderTutorialContent() {
     if (isModern) {
         modernGroups.github.appendChild(githubSection);
         modernGroups.github.appendChild(feedbackSection);
+        modernGroups.github.appendChild(publicFeedbackSection);
     } else {
         tutorialContentArea.appendChild(githubSection);
         tutorialContentArea.appendChild(feedbackSection);
+        tutorialContentArea.appendChild(publicFeedbackSection);
     }
 
     const existingOverlay = document.getElementById('gh-help-overlay');
