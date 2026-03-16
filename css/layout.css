@@ -40,13 +40,12 @@
     align-items: center;
     padding: 10px 20px;
     padding-top: max(10px, env(safe-area-inset-top)); /* 适配灵动岛 */
-    background-color: var(--topbar-bg, rgba(255, 255, 255, 0.8));
+    background-color: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(10px);
-    border-bottom: var(--topbar-border, 1px solid #eee);
+    border-bottom: 1px solid #eee;
     flex-shrink: 0;
     position: relative;
     z-index: 10;
-    color: var(--topbar-text, inherit);
 }
 
 .app-header .back-btn,
@@ -55,7 +54,7 @@
     border: none;
     font-size: 24px;
     font-weight: bold;
-    color: var(--topbar-text, var(--func-icon-color));
+    color: var(--func-icon-color);
     cursor: pointer;
     width: 40px;
     height: 40px;
@@ -66,7 +65,7 @@
 
 .app-header .action-btn svg,
 .app-header .back-btn svg {
-    stroke: var(--topbar-text, var(--func-icon-color));
+    stroke: var(--func-icon-color);
 }
 
 .app-header .action-btn-group {
@@ -81,7 +80,7 @@
     width: 40px;
     height: 40px;
     background-color: transparent;
-    color: var(--topbar-text, var(--func-icon-color));
+    color: var(--func-icon-color);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -93,7 +92,7 @@
 .app-header .action-btn-group .action-btn svg {
     width: 22px;
     height: 22px;
-    stroke: var(--topbar-text, var(--func-icon-color));
+    stroke: var(--func-icon-color);
     stroke-width: 2;
     fill: none;
 }
@@ -116,7 +115,7 @@
 .app-header .title {
     font-size: calc(18px * var(--app-font-scale));
     font-weight: 600;
-    color: var(--topbar-text, var(--global-title-color));
+    color: var(--global-title-color);
     margin: 0;
 }
 

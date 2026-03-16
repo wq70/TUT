@@ -370,6 +370,9 @@ function renderTutorialContent() {
     const isModern = mode === 'modern';
     const isRabbit = mode === 'rabbit';
     
+    // 应用自定义 CSS
+    if (typeof applyCustomTutorialCss === 'function') applyCustomTutorialCss();
+    
     tutorialContentArea.innerHTML = '';
     
     // 清理可能遗留的旧 class
@@ -1429,82 +1432,116 @@ function renderTutorialContent() {
         tutorialContentArea.appendChild(clearDataBtn);
     }
 
-    // 匿名许愿 (Between Us) - 放在云端备份下面，样式与云端备份卡片一致（白底、无粉色）
+    // 反馈许愿 (Between Us) - 放在云端备份下面
     const feedbackSection = document.createElement('a');
     feedbackSection.href = 'https://betweenus.today/creator/yuanyuan';
     feedbackSection.target = '_blank';
     feedbackSection.rel = 'noopener noreferrer';
-    feedbackSection.style.cssText = 'display:block; text-decoration:none; color:inherit; margin-top:12px;';
     const iconMessage = `<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>`;
-    feedbackSection.innerHTML = `
-        <div class="${isModern ? 'tutorial-modern-gh-card' : (isRabbit ? 'tutorial-rabbit-card' : 'btn-white')}" style="${isModern || isRabbit ? '' : 'display:block; cursor:pointer; background:#fff; border:1px solid #e0e0e0; border-radius:8px; padding:12px;'}">
-            <div style="display:flex; align-items:center; gap:12px; padding:${isRabbit ? '12px 20px' : '0'};">
-                <div style="width:40px; height:40px; border-radius:8px; background:${isRabbit ? '#f5f0f1' : '#f5f5f5'}; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:${isRabbit ? '#888' : '#666'};">
-                    ${iconMessage}
-                </div>
-                <div style="flex:1; min-width:0;">
-                    <div style="color:${isRabbit ? '#444' : '#333'}; font-weight:500; font-size:${isRabbit ? '15px' : '0.89rem'}; margin-bottom:2px;">匿名许愿</div>
-                    <div style="font-size:0.81rem; color:#888;">匿名投喂 BUG / 想法 / 愿望，完全保密</div>
-                </div>
-                <svg style="width:14px; height:14px; color:#999; flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
-            </div>
-            <div style="margin-top:8px; padding:8px 12px; background:${isRabbit ? '#fdf8f9' : (isModern ? '#f9f9f9' : '#fffbe6')}; border-radius:6px; border-left:3px solid ${isRabbit ? '#e8dfe1' : (isModern ? '#ddd' : '#ffe58f')};">
-                <div style="font-size:0.75rem; color:#999; line-height:1.5;">⚠️ 单向发送：此渠道为匿名许愿，作者的回复您将无法看到。如需查看回复，请使用下方公开许愿。</div>
-            </div>
-            <div style="margin-top:6px; padding:8px 12px; background:${isRabbit ? '#fdf8f9' : (isModern ? '#f9f9f9' : '#fff7e6')}; border-radius:6px; border-left:3px solid ${isRabbit ? '#e8dfe1' : (isModern ? '#ddd' : '#ffd591')};">
-                <div style="font-size:0.75rem; color:#999; line-height:1.5;">💡 提交后如果显示错误，这是网站本身的问题，实际上已经成功提交了，请放心。</div>
-            </div>
-        </div>
-    `;
-    feedbackSection.onmouseover = function() {
-        const card = this.querySelector('div');
-        if (card) card.style.opacity = '0.9';
-    };
-    feedbackSection.onmouseout = function() {
-        const card = this.querySelector('div');
-        if (card) card.style.opacity = '';
-    };
 
-    // 公开许愿（金山文档）
-    const publicFeedbackSection = document.createElement('div');
-    publicFeedbackSection.style.cssText = 'margin-top:12px;';
-    const iconDoc = `<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`;
-    const kdocsUrl = 'https://www.kdocs.cn/l/csKWtfIfdwDy';
-    publicFeedbackSection.innerHTML = `
-        <div class="${isModern ? 'tutorial-modern-gh-card' : (isRabbit ? 'tutorial-rabbit-card' : 'btn-white')}" style="${isModern || isRabbit ? '' : 'display:block; cursor:default; background:#fff; border:1px solid #e0e0e0; border-radius:8px; padding:12px;'}">
-            <div style="display:flex; align-items:center; gap:12px; padding:${isRabbit ? '12px 20px' : '0'};">
-                <div style="width:40px; height:40px; border-radius:8px; background:${isRabbit ? '#f0f5f1' : (isModern ? '#f0f5f1' : '#f0f8f0')}; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:#67c23a;">
-                    ${iconDoc}
+    if (isModern) {
+        feedbackSection.className = 'tutorial-modern-link-card';
+        feedbackSection.innerHTML = `
+            <div class="tutorial-modern-link-card-inner">
+                <div class="tutorial-modern-link-icon">${iconMessage}</div>
+                <div class="tutorial-modern-link-text">
+                    <div class="tutorial-modern-link-title">匿名许愿</div>
+                    <div class="tutorial-modern-link-desc">匿名投喂 BUG / 想法 / 愿望，完全保密</div>
                 </div>
-                <div style="flex:1; min-width:0;">
-                    <div style="color:${isRabbit ? '#444' : '#333'}; font-weight:500; font-size:${isRabbit ? '15px' : '0.89rem'}; margin-bottom:2px;">公开许愿</div>
-                    <div style="font-size:0.81rem; color:#888;">在金山文档中查看许愿与回复</div>
+                <span class="arrow">›</span>
+            </div>
+            <div class="tutorial-modern-link-note">
+                <span style="color:#c7c7cc;">ℹ</span> 该网站为匿名单向通道：提交后如显示错误属于网站问题，实际已成功提交。作者的回复你不会看到，请放心留言。
+            </div>
+        `;
+    } else if (isRabbit) {
+        feedbackSection.className = 'tutorial-rabbit-link-card';
+        feedbackSection.innerHTML = `
+            <div class="tutorial-rabbit-card">
+                <div class="tutorial-rabbit-link-card-inner">
+                    <div class="tutorial-rabbit-link-icon">${iconMessage}</div>
+                    <div class="tutorial-rabbit-link-text">
+                        <div class="tutorial-rabbit-link-title">匿名许愿</div>
+                        <div class="tutorial-rabbit-link-desc">匿名投喂 BUG / 想法 / 愿望，完全保密</div>
+                    </div>
+                    <svg style="width:8px; height:8px; flex-shrink:0;" viewBox="0 0 8 8"><path d="M1 1l3 3-3 3" fill="none" stroke="#ccc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <div class="tutorial-rabbit-link-note">
+                    <span style="color:#ddd;">ℹ</span> 该网站为匿名单向通道：提交后如显示错误属于网站问题，实际已成功提交。作者的回复你不会看到，请放心留言。
                 </div>
             </div>
-            <div style="margin-top:10px; padding:${isRabbit ? '0 20px 16px' : '10px 0 0 0'}; border-top:1px solid ${isRabbit ? '#fcfafb' : '#f5f5f5'};">
-                <div style="font-size:0.78rem; color:#999; margin-bottom:8px; line-height:1.5;">📋 公开许愿收集表（金山文档 | WPS云文档）<br>可复制链接到金山文档APP或浏览器中打开，许愿内容公开可见，作者回复也能看到。</div>
-                <div style="display:flex; gap:8px;">
-                    <a href="${kdocsUrl}" target="_blank" rel="noopener noreferrer" style="flex:1; display:block; text-align:center; padding:8px; border-radius:4px; font-size:0.85rem; text-decoration:none; background:${isModern ? '#000' : (isRabbit ? '#f5f0f1' : '#67c23a')}; color:${isRabbit ? '#555' : '#fff'}; cursor:pointer;">打开链接</a>
-                    <div id="kdocs-copy-btn" style="flex:1; text-align:center; padding:8px; border-radius:4px; font-size:0.85rem; background:${isRabbit ? '#fff' : '#f5f5f5'}; color:#666; border:${isRabbit ? '1px solid #f0eaeb' : '1px solid #eee'}; cursor:pointer;">复制链接</div>
+        `;
+    } else {
+        feedbackSection.style.cssText = 'display:block; text-decoration:none; color:inherit; margin-top:12px;';
+        feedbackSection.innerHTML = `
+            <div class="btn-white" style="display:block; cursor:pointer; background:#fff; border:1px solid #e0e0e0; border-radius:8px; padding:12px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="width:40px; height:40px; border-radius:8px; background:#f5f5f5; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:#666;">
+                        ${iconMessage}
+                    </div>
+                    <div style="flex:1; min-width:0;">
+                        <div style="color:#333; font-weight:500; font-size:0.89rem; margin-bottom:2px;">匿名许愿</div>
+                        <div style="font-size:0.81rem; color:#888;">匿名投喂 BUG / 想法 / 愿望，完全保密</div>
+                    </div>
+                    <svg style="width:14px; height:14px; color:#999; flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </div>
+                <div style="padding:8px 0 0; font-size:0.75rem; color:#aaa; line-height:1.5;">
+                    <span style="color:#ccc;">ℹ</span> 该网站为匿名单向通道：提交后如显示错误属于网站问题，实际已成功提交。作者的回复你不会看到，请放心留言。
                 </div>
             </div>
-        </div>
-    `;
-    publicFeedbackSection.querySelector('#kdocs-copy-btn').addEventListener('click', () => {
-        navigator.clipboard.writeText(kdocsUrl).then(() => {
-            showToast('链接已复制，可粘贴到金山文档APP中打开');
-        }).catch(() => {
-            // fallback
-            const ta = document.createElement('textarea');
-            ta.value = kdocsUrl;
-            ta.style.cssText = 'position:fixed;left:-9999px;';
-            document.body.appendChild(ta);
-            ta.select();
-            document.execCommand('copy');
-            document.body.removeChild(ta);
-            showToast('链接已复制，可粘贴到金山文档APP中打开');
-        });
-    });
+        `;
+    }
+
+    // 公开许愿 - 链接到金山文档
+    const publicWishSection = document.createElement('a');
+    publicWishSection.href = 'https://www.kdocs.cn/l/csKWtfIfdwDy';
+    publicWishSection.target = '_blank';
+    publicWishSection.rel = 'noopener noreferrer';
+    const iconStar = `<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
+
+    if (isModern) {
+        publicWishSection.className = 'tutorial-modern-link-card';
+        publicWishSection.innerHTML = `
+            <div class="tutorial-modern-link-card-inner">
+                <div class="tutorial-modern-link-icon">${iconStar}</div>
+                <div class="tutorial-modern-link-text">
+                    <div class="tutorial-modern-link-title">公开许愿</div>
+                    <div class="tutorial-modern-link-desc">在文档中公开写下你的愿望，大家都能看到</div>
+                </div>
+                <span class="arrow">›</span>
+            </div>
+        `;
+    } else if (isRabbit) {
+        publicWishSection.className = 'tutorial-rabbit-link-card';
+        publicWishSection.innerHTML = `
+            <div class="tutorial-rabbit-card">
+                <div class="tutorial-rabbit-link-card-inner">
+                    <div class="tutorial-rabbit-link-icon">${iconStar}</div>
+                    <div class="tutorial-rabbit-link-text">
+                        <div class="tutorial-rabbit-link-title">公开许愿</div>
+                        <div class="tutorial-rabbit-link-desc">在文档中公开写下你的愿望，大家都能看到</div>
+                    </div>
+                    <svg style="width:8px; height:8px; flex-shrink:0;" viewBox="0 0 8 8"><path d="M1 1l3 3-3 3" fill="none" stroke="#ccc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+            </div>
+        `;
+    } else {
+        publicWishSection.style.cssText = 'display:block; text-decoration:none; color:inherit; margin-top:12px;';
+        publicWishSection.innerHTML = `
+            <div class="btn-white" style="display:block; cursor:pointer; background:#fff; border:1px solid #e0e0e0; border-radius:8px; padding:12px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="width:40px; height:40px; border-radius:8px; background:#f5f5f5; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:#666;">
+                        ${iconStar}
+                    </div>
+                    <div style="flex:1; min-width:0;">
+                        <div style="color:#333; font-weight:500; font-size:0.89rem; margin-bottom:2px;">公开许愿</div>
+                        <div style="font-size:0.81rem; color:#888;">在文档中公开写下你的愿望，大家都能看到</div>
+                    </div>
+                    <svg style="width:14px; height:14px; color:#999; flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </div>
+            </div>
+        `;
+    }
 
     // GitHub Backup UI
     const githubSection = document.createElement('div');
@@ -1579,11 +1616,11 @@ function renderTutorialContent() {
     if (isModern) {
         modernGroups.github.appendChild(githubSection);
         modernGroups.github.appendChild(feedbackSection);
-        modernGroups.github.appendChild(publicFeedbackSection);
+        modernGroups.github.appendChild(publicWishSection);
     } else {
         tutorialContentArea.appendChild(githubSection);
         tutorialContentArea.appendChild(feedbackSection);
-        tutorialContentArea.appendChild(publicFeedbackSection);
+        tutorialContentArea.appendChild(publicWishSection);
     }
 
     const existingOverlay = document.getElementById('gh-help-overlay');
