@@ -4,91 +4,64 @@
 const APPEARANCE_STORAGE_KEY = 'ovo_appearance_ui_mode';
 const CUSTOM_TUTORIAL_CSS_KEY = 'ovo_custom_tutorial_css';
 const CUSTOM_TUTORIAL_CSS_ENABLED_KEY = 'ovo_custom_tutorial_css_enabled';
+const TOPBAR_SETTINGS_KEY = 'ovo_topbar_settings';
 
-// 顶栏自定义存储键
-const HEADER_BG_COLOR_KEY = 'ovo_header_bg_color';
-const HEADER_BG_OPACITY_KEY = 'ovo_header_bg_opacity';
-const HEADER_TEXT_COLOR_KEY = 'ovo_header_text_color';
-const HEADER_BORDER_VISIBLE_KEY = 'ovo_header_border_visible';
-const HEADER_CUSTOM_ENABLED_KEY = 'ovo_header_custom_enabled';
-
-// 顶栏默认值
-const HEADER_DEFAULTS = {
+const TOPBAR_DEFAULTS = {
     bgColor: '#ffffff',
     bgOpacity: 80,
     textColor: '#333333',
-    borderVisible: true
+    showBorder: true
 };
 
-function getHeaderCustomEnabled() {
-    try { return localStorage.getItem(HEADER_CUSTOM_ENABLED_KEY) === 'true'; } catch (_) { return false; }
-}
-function setHeaderCustomEnabled(v) {
-    try { localStorage.setItem(HEADER_CUSTOM_ENABLED_KEY, v ? 'true' : 'false'); } catch (_) {}
-}
-function getHeaderBgColor() {
-    try { return localStorage.getItem(HEADER_BG_COLOR_KEY) || HEADER_DEFAULTS.bgColor; } catch (_) { return HEADER_DEFAULTS.bgColor; }
-}
-function setHeaderBgColor(v) {
-    try { localStorage.setItem(HEADER_BG_COLOR_KEY, v); } catch (_) {}
-}
-function getHeaderBgOpacity() {
-    try { const v = localStorage.getItem(HEADER_BG_OPACITY_KEY); return v !== null ? parseInt(v, 10) : HEADER_DEFAULTS.bgOpacity; } catch (_) { return HEADER_DEFAULTS.bgOpacity; }
-}
-function setHeaderBgOpacity(v) {
-    try { localStorage.setItem(HEADER_BG_OPACITY_KEY, String(v)); } catch (_) {}
-}
-function getHeaderTextColor() {
-    try { return localStorage.getItem(HEADER_TEXT_COLOR_KEY) || HEADER_DEFAULTS.textColor; } catch (_) { return HEADER_DEFAULTS.textColor; }
-}
-function setHeaderTextColor(v) {
-    try { localStorage.setItem(HEADER_TEXT_COLOR_KEY, v); } catch (_) {}
-}
-function getHeaderBorderVisible() {
-    try { const v = localStorage.getItem(HEADER_BORDER_VISIBLE_KEY); return v !== null ? v === 'true' : HEADER_DEFAULTS.borderVisible; } catch (_) { return HEADER_DEFAULTS.borderVisible; }
-}
-function setHeaderBorderVisible(v) {
-    try { localStorage.setItem(HEADER_BORDER_VISIBLE_KEY, v ? 'true' : 'false'); } catch (_) {}
-}
-
-function hexToRgb(hex) {
-    hex = hex.replace('#', '');
-    if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
-    const n = parseInt(hex, 16);
-    return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
-}
-
-function applyHeaderCustomStyles() {
-    const styleId = 'ovo-header-custom-style';
-    let styleEl = document.getElementById(styleId);
-    if (!getHeaderCustomEnabled()) {
-        if (styleEl) styleEl.remove();
-        return;
+function getTopbarSettings() {
+    try {
+        const raw = localStorage.getItem(TOPBAR_SETTINGS_KEY);
+        return raw ? { ...TOPBAR_DEFAULTS, ...JSON.parse(raw) } : { ...TOPBAR_DEFAULTS };
+    } catch (_) {
+        return { ...TOPBAR_DEFAULTS };
     }
-    const bg = hexToRgb(getHeaderBgColor());
-    const opacity = getHeaderBgOpacity() / 100;
-    const textColor = getHeaderTextColor();
-    const border = getHeaderBorderVisible();
+}
+
+function saveTopbarSettings(settings) {
+    try {
+        localStorage.setItem(TOPBAR_SETTINGS_KEY, JSON.stringify(settings));
+    } catch (_) {}
+}
+
+function applyTopbarSettings(settings) {
+    if (!settings) settings = getTopbarSettings();
+    const styleId = 'ovo-topbar-custom-style';
+    let styleEl = document.getElementById(styleId);
     if (!styleEl) {
         styleEl = document.createElement('style');
         styleEl.id = styleId;
         document.head.appendChild(styleEl);
     }
+    const r = parseInt(settings.bgColor.slice(1, 3), 16);
+    const g = parseInt(settings.bgColor.slice(3, 5), 16);
+    const b = parseInt(settings.bgColor.slice(5, 7), 16);
+    const a = settings.bgOpacity / 100;
     styleEl.textContent = `
-.app-header {
-    background-color: rgba(${bg.r}, ${bg.g}, ${bg.b}, ${opacity}) !important;
-    ${border ? '' : 'border-bottom: none !important;'}
-}
-.app-header .title,
-.app-header .back-btn,
-.app-header .action-btn {
-    color: ${textColor} !important;
-}
-.app-header .action-btn svg,
-.app-header .back-btn svg {
-    stroke: ${textColor} !important;
-}
-`;
+        .app-header {
+            background-color: rgba(${r}, ${g}, ${b}, ${a}) !important;
+            border-bottom: ${settings.showBorder ? '1px solid #eee' : 'none'} !important;
+        }
+        .app-header .title,
+        .app-header .subtitle {
+            color: ${settings.textColor} !important;
+        }
+        .app-header .back-btn,
+        .app-header .action-btn {
+            color: ${settings.textColor} !important;
+        }
+        .app-header .action-btn svg,
+        .app-header .back-btn svg {
+            stroke: ${settings.textColor} !important;
+        }
+        .app-header .action-btn-group .action-btn svg {
+            stroke: ${settings.textColor} !important;
+        }
+    `;
 }
 
 function getAppearanceMode() {
@@ -163,6 +136,7 @@ function renderAppearanceSettingsScreen() {
     inner.className = 'appearance-settings-inner';
 
     const currentMode = getAppearanceMode();
+    const topbarSettings = getTopbarSettings();
 
     inner.innerHTML = `
         <header class="app-header">
@@ -244,62 +218,43 @@ function renderAppearanceSettingsScreen() {
                 </div>
             </div>
 
-            <!-- 顶栏自定义 -->
+            <!-- 顶栏自定义设置 -->
             <div class="appearance-section">
                 <div class="appearance-section-header">
                     <h2 class="appearance-section-title">顶栏样式</h2>
-                    <span class="appearance-section-desc">自定义顶栏颜色配合壁纸</span>
+                    <span class="appearance-section-desc">自定义顶栏颜色，配合壁纸使用</span>
                 </div>
-                <div class="header-custom-area">
-                    <div class="header-custom-toggle-row">
-                        <span class="header-custom-toggle-label">启用自定义顶栏</span>
+                <div class="topbar-settings-area">
+                    <div class="topbar-setting-row">
+                        <span class="topbar-setting-label">背景颜色</span>
+                        <div class="topbar-color-input-group">
+                            <input type="color" id="topbar-bg-color" class="topbar-color-picker" value="${topbarSettings.bgColor}">
+                            <input type="text" id="topbar-bg-color-hex" class="topbar-hex-input" value="${topbarSettings.bgColor}" maxlength="7" placeholder="#ffffff">
+                        </div>
+                    </div>
+                    <div class="topbar-setting-row">
+                        <span class="topbar-setting-label">背景透明度</span>
+                        <div class="topbar-slider-group">
+                            <input type="range" id="topbar-bg-opacity" class="topbar-slider" min="0" max="100" value="${topbarSettings.bgOpacity}">
+                            <span id="topbar-bg-opacity-val" class="topbar-slider-val">${topbarSettings.bgOpacity}%</span>
+                        </div>
+                    </div>
+                    <div class="topbar-setting-row">
+                        <span class="topbar-setting-label">文字颜色</span>
+                        <div class="topbar-color-input-group">
+                            <input type="color" id="topbar-text-color" class="topbar-color-picker" value="${topbarSettings.textColor}">
+                            <input type="text" id="topbar-text-color-hex" class="topbar-hex-input" value="${topbarSettings.textColor}" maxlength="7" placeholder="#333333">
+                        </div>
+                    </div>
+                    <div class="topbar-setting-row">
+                        <span class="topbar-setting-label">底部边框</span>
                         <label class="custom-css-switch">
-                            <input type="checkbox" id="header-custom-toggle" ${getHeaderCustomEnabled() ? 'checked' : ''}>
+                            <input type="checkbox" id="topbar-border-toggle" ${topbarSettings.showBorder ? 'checked' : ''}>
                             <span class="custom-css-switch-slider"></span>
                         </label>
                     </div>
-
-                    <div class="header-custom-controls" id="header-custom-controls" style="${getHeaderCustomEnabled() ? '' : 'opacity:0.5;pointer-events:none;'}">
-                        <!-- 背景颜色 -->
-                        <div class="header-ctrl-row">
-                            <span class="header-ctrl-label">背景颜色</span>
-                            <div class="header-color-input-group">
-                                <input type="color" id="header-bg-color" class="header-color-picker" value="${getHeaderBgColor()}">
-                                <input type="text" id="header-bg-color-hex" class="header-hex-input" value="${getHeaderBgColor()}" maxlength="7" placeholder="#ffffff">
-                            </div>
-                        </div>
-
-                        <!-- 背景透明度 -->
-                        <div class="header-ctrl-row">
-                            <span class="header-ctrl-label">背景透明度</span>
-                            <div class="header-slider-group">
-                                <input type="range" id="header-bg-opacity" class="header-slider" min="0" max="100" value="${getHeaderBgOpacity()}">
-                                <span class="header-slider-value" id="header-bg-opacity-val">${getHeaderBgOpacity()}%</span>
-                            </div>
-                        </div>
-
-                        <!-- 文字颜色 -->
-                        <div class="header-ctrl-row">
-                            <span class="header-ctrl-label">文字颜色</span>
-                            <div class="header-color-input-group">
-                                <input type="color" id="header-text-color" class="header-color-picker" value="${getHeaderTextColor()}">
-                                <input type="text" id="header-text-color-hex" class="header-hex-input" value="${getHeaderTextColor()}" maxlength="7" placeholder="#333333">
-                            </div>
-                        </div>
-
-                        <!-- 底部边框 -->
-                        <div class="header-ctrl-row">
-                            <span class="header-ctrl-label">底部边框</span>
-                            <label class="custom-css-switch">
-                                <input type="checkbox" id="header-border-toggle" ${getHeaderBorderVisible() ? 'checked' : ''}>
-                                <span class="custom-css-switch-slider"></span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- 恢复默认 -->
-                    <div class="header-custom-btn-row">
-                        <button type="button" id="header-reset-btn" class="custom-css-btn neutral">恢复默认</button>
+                    <div class="topbar-btn-row">
+                        <button type="button" id="topbar-reset-btn" class="custom-css-btn neutral">恢复默认</button>
                     </div>
                 </div>
             </div>
@@ -392,98 +347,79 @@ function renderAppearanceSettingsScreen() {
         });
     }
 
-    // --- 顶栏自定义事件绑定 ---
-    const headerToggle = inner.querySelector('#header-custom-toggle');
-    const headerControls = inner.querySelector('#header-custom-controls');
-    const headerBgColor = inner.querySelector('#header-bg-color');
-    const headerBgColorHex = inner.querySelector('#header-bg-color-hex');
-    const headerBgOpacity = inner.querySelector('#header-bg-opacity');
-    const headerBgOpacityVal = inner.querySelector('#header-bg-opacity-val');
-    const headerTextColor = inner.querySelector('#header-text-color');
-    const headerTextColorHex = inner.querySelector('#header-text-color-hex');
-    const headerBorderToggle = inner.querySelector('#header-border-toggle');
-    const headerResetBtn = inner.querySelector('#header-reset-btn');
+    // 顶栏设置事件绑定
+    const tbBgColor = inner.querySelector('#topbar-bg-color');
+    const tbBgColorHex = inner.querySelector('#topbar-bg-color-hex');
+    const tbOpacity = inner.querySelector('#topbar-bg-opacity');
+    const tbOpacityVal = inner.querySelector('#topbar-bg-opacity-val');
+    const tbTextColor = inner.querySelector('#topbar-text-color');
+    const tbTextColorHex = inner.querySelector('#topbar-text-color-hex');
+    const tbBorderToggle = inner.querySelector('#topbar-border-toggle');
+    const tbResetBtn = inner.querySelector('#topbar-reset-btn');
 
-    function updateHeaderControls(enabled) {
-        if (headerControls) {
-            headerControls.style.opacity = enabled ? '' : '0.5';
-            headerControls.style.pointerEvents = enabled ? '' : 'none';
-        }
+    function updateTopbar() {
+        const s = {
+            bgColor: tbBgColor.value,
+            bgOpacity: parseInt(tbOpacity.value),
+            textColor: tbTextColor.value,
+            showBorder: tbBorderToggle.checked
+        };
+        saveTopbarSettings(s);
+        applyTopbarSettings(s);
     }
 
-    if (headerToggle) {
-        headerToggle.addEventListener('change', () => {
-            const enabled = headerToggle.checked;
-            setHeaderCustomEnabled(enabled);
-            updateHeaderControls(enabled);
-            applyHeaderCustomStyles();
+    if (tbBgColor) {
+        tbBgColor.addEventListener('input', () => {
+            tbBgColorHex.value = tbBgColor.value;
+            updateTopbar();
         });
     }
-
-    if (headerBgColor && headerBgColorHex) {
-        headerBgColor.addEventListener('input', () => {
-            headerBgColorHex.value = headerBgColor.value;
-            setHeaderBgColor(headerBgColor.value);
-            applyHeaderCustomStyles();
-        });
-        headerBgColorHex.addEventListener('input', () => {
-            let v = headerBgColorHex.value.trim();
+    if (tbBgColorHex) {
+        tbBgColorHex.addEventListener('input', () => {
+            let v = tbBgColorHex.value.trim();
             if (!v.startsWith('#')) v = '#' + v;
             if (/^#[0-9a-fA-F]{6}$/.test(v)) {
-                headerBgColor.value = v;
-                setHeaderBgColor(v);
-                applyHeaderCustomStyles();
+                tbBgColor.value = v;
+                updateTopbar();
             }
         });
     }
-
-    if (headerBgOpacity && headerBgOpacityVal) {
-        headerBgOpacity.addEventListener('input', () => {
-            headerBgOpacityVal.textContent = headerBgOpacity.value + '%';
-            setHeaderBgOpacity(parseInt(headerBgOpacity.value, 10));
-            applyHeaderCustomStyles();
+    if (tbOpacity) {
+        tbOpacity.addEventListener('input', () => {
+            tbOpacityVal.textContent = tbOpacity.value + '%';
+            updateTopbar();
         });
     }
-
-    if (headerTextColor && headerTextColorHex) {
-        headerTextColor.addEventListener('input', () => {
-            headerTextColorHex.value = headerTextColor.value;
-            setHeaderTextColor(headerTextColor.value);
-            applyHeaderCustomStyles();
+    if (tbTextColor) {
+        tbTextColor.addEventListener('input', () => {
+            tbTextColorHex.value = tbTextColor.value;
+            updateTopbar();
         });
-        headerTextColorHex.addEventListener('input', () => {
-            let v = headerTextColorHex.value.trim();
+    }
+    if (tbTextColorHex) {
+        tbTextColorHex.addEventListener('input', () => {
+            let v = tbTextColorHex.value.trim();
             if (!v.startsWith('#')) v = '#' + v;
             if (/^#[0-9a-fA-F]{6}$/.test(v)) {
-                headerTextColor.value = v;
-                setHeaderTextColor(v);
-                applyHeaderCustomStyles();
+                tbTextColor.value = v;
+                updateTopbar();
             }
         });
     }
-
-    if (headerBorderToggle) {
-        headerBorderToggle.addEventListener('change', () => {
-            setHeaderBorderVisible(headerBorderToggle.checked);
-            applyHeaderCustomStyles();
-        });
+    if (tbBorderToggle) {
+        tbBorderToggle.addEventListener('change', updateTopbar);
     }
-
-    if (headerResetBtn) {
-        headerResetBtn.addEventListener('click', () => {
-            if (!confirm('确定要恢复顶栏默认样式吗？')) return;
-            setHeaderBgColor(HEADER_DEFAULTS.bgColor);
-            setHeaderBgOpacity(HEADER_DEFAULTS.bgOpacity);
-            setHeaderTextColor(HEADER_DEFAULTS.textColor);
-            setHeaderBorderVisible(HEADER_DEFAULTS.borderVisible);
-            if (headerBgColor) headerBgColor.value = HEADER_DEFAULTS.bgColor;
-            if (headerBgColorHex) headerBgColorHex.value = HEADER_DEFAULTS.bgColor;
-            if (headerBgOpacity) headerBgOpacity.value = HEADER_DEFAULTS.bgOpacity;
-            if (headerBgOpacityVal) headerBgOpacityVal.textContent = HEADER_DEFAULTS.bgOpacity + '%';
-            if (headerTextColor) headerTextColor.value = HEADER_DEFAULTS.textColor;
-            if (headerTextColorHex) headerTextColorHex.value = HEADER_DEFAULTS.textColor;
-            if (headerBorderToggle) headerBorderToggle.checked = HEADER_DEFAULTS.borderVisible;
-            applyHeaderCustomStyles();
+    if (tbResetBtn) {
+        tbResetBtn.addEventListener('click', () => {
+            saveTopbarSettings(TOPBAR_DEFAULTS);
+            applyTopbarSettings(TOPBAR_DEFAULTS);
+            tbBgColor.value = TOPBAR_DEFAULTS.bgColor;
+            tbBgColorHex.value = TOPBAR_DEFAULTS.bgColor;
+            tbOpacity.value = TOPBAR_DEFAULTS.bgOpacity;
+            tbOpacityVal.textContent = TOPBAR_DEFAULTS.bgOpacity + '%';
+            tbTextColor.value = TOPBAR_DEFAULTS.textColor;
+            tbTextColorHex.value = TOPBAR_DEFAULTS.textColor;
+            tbBorderToggle.checked = TOPBAR_DEFAULTS.showBorder;
             if (typeof showToast === 'function') showToast('顶栏样式已恢复默认');
         });
     }
@@ -495,7 +431,7 @@ function renderAppearanceSettingsScreen() {
         if (!screen || screen.querySelector('.appearance-settings-inner')) return;
         renderAppearanceSettingsScreen();
         applyCustomTutorialCss();
-        applyHeaderCustomStyles();
+        applyTopbarSettings();
     }
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', injectWhenReady);
