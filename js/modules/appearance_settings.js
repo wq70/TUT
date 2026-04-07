@@ -4,65 +4,6 @@
 const APPEARANCE_STORAGE_KEY = 'ovo_appearance_ui_mode';
 const CUSTOM_TUTORIAL_CSS_KEY = 'ovo_custom_tutorial_css';
 const CUSTOM_TUTORIAL_CSS_ENABLED_KEY = 'ovo_custom_tutorial_css_enabled';
-const TOPBAR_SETTINGS_KEY = 'ovo_topbar_settings';
-
-const TOPBAR_DEFAULTS = {
-    bgColor: '#ffffff',
-    bgOpacity: 80,
-    textColor: '#333333',
-    showBorder: true
-};
-
-function getTopbarSettings() {
-    try {
-        const raw = localStorage.getItem(TOPBAR_SETTINGS_KEY);
-        return raw ? { ...TOPBAR_DEFAULTS, ...JSON.parse(raw) } : { ...TOPBAR_DEFAULTS };
-    } catch (_) {
-        return { ...TOPBAR_DEFAULTS };
-    }
-}
-
-function saveTopbarSettings(settings) {
-    try {
-        localStorage.setItem(TOPBAR_SETTINGS_KEY, JSON.stringify(settings));
-    } catch (_) {}
-}
-
-function applyTopbarSettings(settings) {
-    if (!settings) settings = getTopbarSettings();
-    const styleId = 'ovo-topbar-custom-style';
-    let styleEl = document.getElementById(styleId);
-    if (!styleEl) {
-        styleEl = document.createElement('style');
-        styleEl.id = styleId;
-        document.head.appendChild(styleEl);
-    }
-    const r = parseInt(settings.bgColor.slice(1, 3), 16);
-    const g = parseInt(settings.bgColor.slice(3, 5), 16);
-    const b = parseInt(settings.bgColor.slice(5, 7), 16);
-    const a = settings.bgOpacity / 100;
-    styleEl.textContent = `
-        .app-header {
-            background-color: rgba(${r}, ${g}, ${b}, ${a}) !important;
-            border-bottom: ${settings.showBorder ? '1px solid #eee' : 'none'} !important;
-        }
-        .app-header .title,
-        .app-header .subtitle {
-            color: ${settings.textColor} !important;
-        }
-        .app-header .back-btn,
-        .app-header .action-btn {
-            color: ${settings.textColor} !important;
-        }
-        .app-header .action-btn svg,
-        .app-header .back-btn svg {
-            stroke: ${settings.textColor} !important;
-        }
-        .app-header .action-btn-group .action-btn svg {
-            stroke: ${settings.textColor} !important;
-        }
-    `;
-}
 
 function getAppearanceMode() {
     try {
@@ -136,7 +77,6 @@ function renderAppearanceSettingsScreen() {
     inner.className = 'appearance-settings-inner';
 
     const currentMode = getAppearanceMode();
-    const topbarSettings = getTopbarSettings();
 
     inner.innerHTML = `
         <header class="app-header">
@@ -214,47 +154,6 @@ function renderAppearanceSettingsScreen() {
                     <div class="appearance-thumbnail-item">
                         <div class="appearance-thumbnail-box" style="background:#eee;"></div>
                         <div class="appearance-thumbnail-label">默认</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 顶栏自定义设置 -->
-            <div class="appearance-section">
-                <div class="appearance-section-header">
-                    <h2 class="appearance-section-title">顶栏样式</h2>
-                    <span class="appearance-section-desc">自定义顶栏颜色，配合壁纸使用</span>
-                </div>
-                <div class="topbar-settings-area">
-                    <div class="topbar-setting-row">
-                        <span class="topbar-setting-label">背景颜色</span>
-                        <div class="topbar-color-input-group">
-                            <input type="color" id="topbar-bg-color" class="topbar-color-picker" value="${topbarSettings.bgColor}">
-                            <input type="text" id="topbar-bg-color-hex" class="topbar-hex-input" value="${topbarSettings.bgColor}" maxlength="7" placeholder="#ffffff">
-                        </div>
-                    </div>
-                    <div class="topbar-setting-row">
-                        <span class="topbar-setting-label">背景透明度</span>
-                        <div class="topbar-slider-group">
-                            <input type="range" id="topbar-bg-opacity" class="topbar-slider" min="0" max="100" value="${topbarSettings.bgOpacity}">
-                            <span id="topbar-bg-opacity-val" class="topbar-slider-val">${topbarSettings.bgOpacity}%</span>
-                        </div>
-                    </div>
-                    <div class="topbar-setting-row">
-                        <span class="topbar-setting-label">文字颜色</span>
-                        <div class="topbar-color-input-group">
-                            <input type="color" id="topbar-text-color" class="topbar-color-picker" value="${topbarSettings.textColor}">
-                            <input type="text" id="topbar-text-color-hex" class="topbar-hex-input" value="${topbarSettings.textColor}" maxlength="7" placeholder="#333333">
-                        </div>
-                    </div>
-                    <div class="topbar-setting-row">
-                        <span class="topbar-setting-label">底部边框</span>
-                        <label class="custom-css-switch">
-                            <input type="checkbox" id="topbar-border-toggle" ${topbarSettings.showBorder ? 'checked' : ''}>
-                            <span class="custom-css-switch-slider"></span>
-                        </label>
-                    </div>
-                    <div class="topbar-btn-row">
-                        <button type="button" id="topbar-reset-btn" class="custom-css-btn neutral">恢复默认</button>
                     </div>
                 </div>
             </div>
@@ -346,83 +245,6 @@ function renderAppearanceSettingsScreen() {
             if (typeof showToast === 'function') showToast('自定义 CSS 已清空');
         });
     }
-
-    // 顶栏设置事件绑定
-    const tbBgColor = inner.querySelector('#topbar-bg-color');
-    const tbBgColorHex = inner.querySelector('#topbar-bg-color-hex');
-    const tbOpacity = inner.querySelector('#topbar-bg-opacity');
-    const tbOpacityVal = inner.querySelector('#topbar-bg-opacity-val');
-    const tbTextColor = inner.querySelector('#topbar-text-color');
-    const tbTextColorHex = inner.querySelector('#topbar-text-color-hex');
-    const tbBorderToggle = inner.querySelector('#topbar-border-toggle');
-    const tbResetBtn = inner.querySelector('#topbar-reset-btn');
-
-    function updateTopbar() {
-        const s = {
-            bgColor: tbBgColor.value,
-            bgOpacity: parseInt(tbOpacity.value),
-            textColor: tbTextColor.value,
-            showBorder: tbBorderToggle.checked
-        };
-        saveTopbarSettings(s);
-        applyTopbarSettings(s);
-    }
-
-    if (tbBgColor) {
-        tbBgColor.addEventListener('input', () => {
-            tbBgColorHex.value = tbBgColor.value;
-            updateTopbar();
-        });
-    }
-    if (tbBgColorHex) {
-        tbBgColorHex.addEventListener('input', () => {
-            let v = tbBgColorHex.value.trim();
-            if (!v.startsWith('#')) v = '#' + v;
-            if (/^#[0-9a-fA-F]{6}$/.test(v)) {
-                tbBgColor.value = v;
-                updateTopbar();
-            }
-        });
-    }
-    if (tbOpacity) {
-        tbOpacity.addEventListener('input', () => {
-            tbOpacityVal.textContent = tbOpacity.value + '%';
-            updateTopbar();
-        });
-    }
-    if (tbTextColor) {
-        tbTextColor.addEventListener('input', () => {
-            tbTextColorHex.value = tbTextColor.value;
-            updateTopbar();
-        });
-    }
-    if (tbTextColorHex) {
-        tbTextColorHex.addEventListener('input', () => {
-            let v = tbTextColorHex.value.trim();
-            if (!v.startsWith('#')) v = '#' + v;
-            if (/^#[0-9a-fA-F]{6}$/.test(v)) {
-                tbTextColor.value = v;
-                updateTopbar();
-            }
-        });
-    }
-    if (tbBorderToggle) {
-        tbBorderToggle.addEventListener('change', updateTopbar);
-    }
-    if (tbResetBtn) {
-        tbResetBtn.addEventListener('click', () => {
-            saveTopbarSettings(TOPBAR_DEFAULTS);
-            applyTopbarSettings(TOPBAR_DEFAULTS);
-            tbBgColor.value = TOPBAR_DEFAULTS.bgColor;
-            tbBgColorHex.value = TOPBAR_DEFAULTS.bgColor;
-            tbOpacity.value = TOPBAR_DEFAULTS.bgOpacity;
-            tbOpacityVal.textContent = TOPBAR_DEFAULTS.bgOpacity + '%';
-            tbTextColor.value = TOPBAR_DEFAULTS.textColor;
-            tbTextColorHex.value = TOPBAR_DEFAULTS.textColor;
-            tbBorderToggle.checked = TOPBAR_DEFAULTS.showBorder;
-            if (typeof showToast === 'function') showToast('顶栏样式已恢复默认');
-        });
-    }
 }
 
 (function initAppearanceSettings() {
@@ -431,7 +253,6 @@ function renderAppearanceSettingsScreen() {
         if (!screen || screen.querySelector('.appearance-settings-inner')) return;
         renderAppearanceSettingsScreen();
         applyCustomTutorialCss();
-        applyTopbarSettings();
     }
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', injectWhenReady);

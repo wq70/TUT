@@ -362,6 +362,120 @@ input:checked + .kkt-slider:before {
     gap: 10px;
 }
 
+/* 顶栏颜色自定义 */
+.topbar-custom-section {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid #e9ecef;
+}
+
+.topbar-custom-item {
+    margin-bottom: 16px;
+}
+
+.topbar-custom-item:last-child {
+    margin-bottom: 0;
+}
+
+.topbar-custom-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-color, #333);
+    margin-bottom: 8px;
+}
+
+.topbar-color-input-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.topbar-color-picker {
+    width: 50px;
+    height: 40px;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    cursor: pointer;
+    background: #fff;
+}
+
+.topbar-hex-input {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: monospace;
+    background: #fff;
+}
+
+.topbar-slider-group {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.topbar-slider {
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: #dee2e6;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.topbar-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--primary-color, #6C8CD5);
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.topbar-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--primary-color, #6C8CD5);
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.topbar-slider-value {
+    min-width: 45px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-color, #333);
+    text-align: right;
+}
+
+.topbar-custom-option-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--text-color, #333);
+    cursor: pointer;
+    gap: 10px;
+    padding: 12px;
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.topbar-custom-option-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+
 /* 音乐上传弹窗 */
 .music-upload-tabs {
     display: flex;

@@ -1845,6 +1845,7 @@ function setupApiSettingsApp() {
             gemini: 'https://generativelanguage.googleapis.com'
         };
     db.apiSettings && (n.value = db.apiSettings.provider || 'newapi', r.value = db.apiSettings.url || '', s.value = db.apiSettings.key || '', db.apiSettings.model && (a.innerHTML = `<option value="${db.apiSettings.model}">${db.apiSettings.model}</option>`));
+    if (db.apiSettings && typeof db.apiSettings.onlineRoleEnabled !== 'undefined') { document.getElementById('online-role-switch').checked = db.apiSettings.onlineRoleEnabled; } else { document.getElementById('online-role-switch').checked = true; }
     if (db.apiSettings && typeof db.apiSettings.timePerceptionEnabled !== 'undefined') { document.getElementById('time-perception-switch').checked = db.apiSettings.timePerceptionEnabled; }
     if (db.apiSettings && typeof db.apiSettings.streamEnabled !== 'undefined') { document.getElementById('stream-switch').checked = db.apiSettings.streamEnabled; } else { document.getElementById('stream-switch').checked = true; }
     if (db.apiSettings && typeof db.apiSettings.quickReplyEnabled !== 'undefined') { document.getElementById('quick-reply-switch').checked = db.apiSettings.quickReplyEnabled; } else { document.getElementById('quick-reply-switch').checked = false; }
@@ -1964,6 +1965,7 @@ function setupApiSettingsApp() {
             url: r.value,
             key: s.value,
             model: a.value,
+            onlineRoleEnabled: document.getElementById('online-role-switch').checked,
             timePerceptionEnabled: document.getElementById('time-perception-switch').checked,
             streamEnabled: document.getElementById('stream-switch').checked,
             quickReplyEnabled: document.getElementById('quick-reply-switch').checked,
@@ -3275,6 +3277,7 @@ function setupWallpaperApp() {
     }
     // 音乐播放器壁纸（在壁纸APP中管理）
     setupMusicWallpaperInWallpaperScreen();
+    setupTopbarCustomization();
 }
 
 function setupMusicWallpaperInWallpaperScreen() {
@@ -3365,6 +3368,198 @@ function setupMusicWallpaperInWallpaperScreen() {
             refreshPreview();
         });
     }
+}
+
+function setupTopbarCustomization() {
+    const TOPBAR_BG_COLOR_KEY = 'topbar_bg_color';
+    const TOPBAR_BG_OPACITY_KEY = 'topbar_bg_opacity';
+    const TOPBAR_TEXT_COLOR_KEY = 'topbar_text_color';
+    const TOPBAR_SHOW_BORDER_KEY = 'topbar_show_border';
+
+    const bgColorPicker = document.getElementById('topbar-bg-color');
+    const bgColorHex = document.getElementById('topbar-bg-color-hex');
+    const bgOpacitySlider = document.getElementById('topbar-bg-opacity');
+    const bgOpacityValue = document.getElementById('topbar-bg-opacity-value');
+    const textColorPicker = document.getElementById('topbar-text-color');
+    const textColorHex = document.getElementById('topbar-text-color-hex');
+    const showBorderCheck = document.getElementById('topbar-show-border');
+    const resetBtn = document.getElementById('topbar-reset-btn');
+
+    // 默认值
+    const defaults = {
+        bgColor: '#ffffff',
+        bgOpacity: 100,
+        textColor: '#000000',
+        showBorder: true
+    };
+
+    // 加载保存的设置
+    function loadSettings() {
+        try {
+            return {
+                bgColor: localStorage.getItem(TOPBAR_BG_COLOR_KEY) || defaults.bgColor,
+                bgOpacity: parseInt(localStorage.getItem(TOPBAR_BG_OPACITY_KEY)) || defaults.bgOpacity,
+                textColor: localStorage.getItem(TOPBAR_TEXT_COLOR_KEY) || defaults.textColor,
+                showBorder: localStorage.getItem(TOPBAR_SHOW_BORDER_KEY) !== 'false'
+            };
+        } catch (_) {
+            return defaults;
+        }
+    }
+
+    // 保存设置
+    function saveSettings(settings) {
+        try {
+            localStorage.setItem(TOPBAR_BG_COLOR_KEY, settings.bgColor);
+            localStorage.setItem(TOPBAR_BG_OPACITY_KEY, settings.bgOpacity.toString());
+            localStorage.setItem(TOPBAR_TEXT_COLOR_KEY, settings.textColor);
+            localStorage.setItem(TOPBAR_SHOW_BORDER_KEY, settings.showBorder.toString());
+        } catch (_) {}
+    }
+
+    // 应用样式到所有顶栏
+    function applyTopbarStyles(settings) {
+        const styleId = 'topbar-custom-style';
+        let styleEl = document.getElementById(styleId);
+        if (!styleEl) {
+            styleEl = document.createElement('style');
+            styleEl.id = styleId;
+            document.head.appendChild(styleEl);
+        }
+
+        const opacity = settings.bgOpacity / 100;
+        const rgbaMatch = settings.bgColor.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
+        let bgColorWithOpacity = settings.bgColor;
+        if (rgbaMatch) {
+            const r = parseInt(rgbaMatch[1], 16);
+            const g = parseInt(rgbaMatch[2], 16);
+            const b = parseInt(rgbaMatch[3], 16);
+            bgColorWithOpacity = `rgba(${r}, ${g}, ${b}, ${opacity})`;
+        }
+
+        const borderStyle = settings.showBorder ? '' : 'border-bottom: none !important;';
+
+        styleEl.textContent = `
+            .app-header {
+                background: ${bgColorWithOpacity} !important;
+                color: ${settings.textColor} !important;
+                ${borderStyle}
+            }
+            .app-header .title,
+            .app-header .back-btn,
+            .app-header .action-btn,
+            .app-header .subtitle {
+                color: ${settings.textColor} !important;
+            }
+            .app-header .action-btn svg {
+                stroke: ${settings.textColor} !important;
+            }
+        `;
+    }
+
+    // 初始化界面
+    function initUI() {
+        const settings = loadSettings();
+        
+        if (bgColorPicker) bgColorPicker.value = settings.bgColor;
+        if (bgColorHex) bgColorHex.value = settings.bgColor;
+        if (bgOpacitySlider) bgOpacitySlider.value = settings.bgOpacity;
+        if (bgOpacityValue) bgOpacityValue.textContent = settings.bgOpacity + '%';
+        if (textColorPicker) textColorPicker.value = settings.textColor;
+        if (textColorHex) textColorHex.value = settings.textColor;
+        if (showBorderCheck) showBorderCheck.checked = settings.showBorder;
+
+        applyTopbarStyles(settings);
+    }
+
+    // 背景颜色选择器
+    if (bgColorPicker) {
+        bgColorPicker.addEventListener('input', function() {
+            if (bgColorHex) bgColorHex.value = this.value;
+            const settings = loadSettings();
+            settings.bgColor = this.value;
+            saveSettings(settings);
+            applyTopbarStyles(settings);
+        });
+    }
+
+    // 背景颜色 Hex 输入
+    if (bgColorHex) {
+        bgColorHex.addEventListener('input', function() {
+            const hex = this.value.trim();
+            if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+                if (bgColorPicker) bgColorPicker.value = hex;
+                const settings = loadSettings();
+                settings.bgColor = hex;
+                saveSettings(settings);
+                applyTopbarStyles(settings);
+            }
+        });
+    }
+
+    // 背景透明度滑块
+    if (bgOpacitySlider) {
+        bgOpacitySlider.addEventListener('input', function() {
+            const opacity = parseInt(this.value);
+            if (bgOpacityValue) bgOpacityValue.textContent = opacity + '%';
+            const settings = loadSettings();
+            settings.bgOpacity = opacity;
+            saveSettings(settings);
+            applyTopbarStyles(settings);
+        });
+    }
+
+    // 文字颜色选择器
+    if (textColorPicker) {
+        textColorPicker.addEventListener('input', function() {
+            if (textColorHex) textColorHex.value = this.value;
+            const settings = loadSettings();
+            settings.textColor = this.value;
+            saveSettings(settings);
+            applyTopbarStyles(settings);
+        });
+    }
+
+    // 文字颜色 Hex 输入
+    if (textColorHex) {
+        textColorHex.addEventListener('input', function() {
+            const hex = this.value.trim();
+            if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+                if (textColorPicker) textColorPicker.value = hex;
+                const settings = loadSettings();
+                settings.textColor = hex;
+                saveSettings(settings);
+                applyTopbarStyles(settings);
+            }
+        });
+    }
+
+    // 边框显示开关
+    if (showBorderCheck) {
+        showBorderCheck.addEventListener('change', function() {
+            const settings = loadSettings();
+            settings.showBorder = this.checked;
+            saveSettings(settings);
+            applyTopbarStyles(settings);
+        });
+    }
+
+    // 恢复默认按钮
+    if (resetBtn) {
+        resetBtn.addEventListener('click', function() {
+            if (!confirm('确定要恢复默认顶栏样式吗？')) return;
+            
+            saveSettings(defaults);
+            initUI();
+            
+            if (typeof showToast === 'function') {
+                showToast('已恢复默认顶栏样式');
+            }
+        });
+    }
+
+    // 初始化
+    initUI();
 }
 
 function populateGlobalCssPresetSelect() {
