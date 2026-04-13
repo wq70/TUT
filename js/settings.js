@@ -357,6 +357,84 @@ function setupChatSettings() {
         }
     });
 
+    // --- 导出角色卡 ---
+    document.getElementById('export-ovo-card-png-btn')?.addEventListener('click', async () => {
+        const character = db.characters.find(c => c.id === currentChatId);
+        if (!character) return showToast('未找到角色数据');
+
+        try {
+            showToast('正在生成 PNG 角色卡...');
+            let base64Image = character.avatar;
+            
+            // 如果头像是 URL，尝试 fetch 它
+            if (base64Image.startsWith('http')) {
+                try {
+                    const res = await fetch(base64Image);
+                    const blob = await res.blob();
+                    base64Image = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(blob);
+                    });
+                } catch (e) {
+                    console.warn('获取在线头像失败，使用默认头像', e);
+                    // 提供一个内置的 base64 占位图或者提醒用户无法获取
+                    return showToast('无法获取在线头像，请先更换为本地上传的头像再导出 PNG');
+                }
+            }
+
+            // 清理多余的数据：聊天记录、屏蔽历史、手机操控历史等
+            const exportChar = JSON.parse(JSON.stringify(character));
+            delete exportChar.history;
+            delete exportChar.blockHistory;
+            delete exportChar.charBlockHistory;
+            delete exportChar.friendRequests;
+            delete exportChar.userFriendRequests;
+            delete exportChar.phoneControlHistory;
+
+            const pngDataUrl = await writeOvoPngMetadata(base64Image, exportChar);
+            const a = document.createElement('a');
+            a.href = pngDataUrl;
+            a.download = `OVO角色卡_${character.remarkName || character.realName || '未命名'}_${new Date().toISOString().slice(0, 10)}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast('PNG 角色卡导出成功');
+        } catch (error) {
+            console.error('导出 PNG 角色卡失败:', error);
+            showToast(`导出失败: ${error.message}`);
+        }
+    });
+
+    document.getElementById('export-ovo-card-json-btn')?.addEventListener('click', () => {
+        const character = db.characters.find(c => c.id === currentChatId);
+        if (!character) return showToast('未找到角色数据');
+
+        // 清理多余的数据：聊天记录、屏蔽历史、手机操控历史等
+        const exportChar = JSON.parse(JSON.stringify(character));
+        delete exportChar.history;
+        delete exportChar.blockHistory;
+        delete exportChar.charBlockHistory;
+        delete exportChar.friendRequests;
+        delete exportChar.userFriendRequests;
+        delete exportChar.phoneControlHistory;
+
+        const jsonStr = JSON.stringify(exportChar, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `OVO角色卡_${character.remarkName || character.realName || '未命名'}_${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showToast('JSON 角色卡导出成功');
+    });
+
     // --- 聊天记录导出 ---
     document.getElementById('export-chat-history-btn').addEventListener('click', () => {
         const character = db.characters.find(c => c.id === currentChatId);
@@ -586,8 +664,8 @@ function setupChatSettings() {
         const phoneControlEnabledEl = document.getElementById('setting-phone-control-enabled');
         const phoneControlOptionsEl = document.getElementById('setting-phone-control-options');
         const phoneControlActionsEl = document.getElementById('setting-phone-control-actions');
-        const phoneControlFolderFilterEl = document.getElementById('setting-phone-control-folder-filter');
-        const phoneControlFolderSelectionEl = document.getElementById('setting-phone-control-folder-selection');
+        const phoneControlCharFilterEl = document.getElementById('setting-phone-control-char-filter');
+        const phoneControlCharSelectionEl = document.getElementById('setting-phone-control-char-selection');
         const phoneControlViewLimitEl = document.getElementById('setting-phone-control-view-limit');
         const phoneControlViewLimitValueEl = document.getElementById('setting-phone-control-view-limit-value');
         const warningModal = document.getElementById('phone-control-warning-modal');
@@ -596,15 +674,15 @@ function setupChatSettings() {
         function showPhoneControlOptions() {
             if (phoneControlOptionsEl) phoneControlOptionsEl.style.display = 'block';
             if (phoneControlActionsEl) phoneControlActionsEl.style.display = 'flex';
-            if (phoneControlFolderFilterEl) phoneControlFolderFilterEl.style.display = 'flex';
-            const folderFilterOn = document.getElementById('setting-phone-control-folder-filter-enabled');
-            if (phoneControlFolderSelectionEl) phoneControlFolderSelectionEl.style.display = (folderFilterOn && folderFilterOn.checked) ? 'block' : 'none';
+            if (phoneControlCharFilterEl) phoneControlCharFilterEl.style.display = 'flex';
+            const charFilterOn = document.getElementById('setting-phone-control-char-filter-enabled');
+            if (phoneControlCharSelectionEl) phoneControlCharSelectionEl.style.display = (charFilterOn && charFilterOn.checked) ? 'flex' : 'none';
         }
         function hidePhoneControlOptions() {
             if (phoneControlOptionsEl) phoneControlOptionsEl.style.display = 'none';
             if (phoneControlActionsEl) phoneControlActionsEl.style.display = 'none';
-            if (phoneControlFolderFilterEl) phoneControlFolderFilterEl.style.display = 'none';
-            if (phoneControlFolderSelectionEl) phoneControlFolderSelectionEl.style.display = 'none';
+            if (phoneControlCharFilterEl) phoneControlCharFilterEl.style.display = 'none';
+            if (phoneControlCharSelectionEl) phoneControlCharSelectionEl.style.display = 'none';
         }
         phoneControlEnabledEl.addEventListener('change', function () {
             if (this.checked) {
@@ -653,9 +731,96 @@ function setupChatSettings() {
             if (warningModal) warningModal.style.display = 'none';
             showPhoneControlOptions();
         });
-        document.getElementById('setting-phone-control-folder-filter-enabled') && document.getElementById('setting-phone-control-folder-filter-enabled').addEventListener('change', function () {
-            if (phoneControlFolderSelectionEl) phoneControlFolderSelectionEl.style.display = this.checked ? 'block' : 'none';
+        document.getElementById('setting-phone-control-char-filter-enabled') && document.getElementById('setting-phone-control-char-filter-enabled').addEventListener('change', function () {
+            if (phoneControlCharSelectionEl) phoneControlCharSelectionEl.style.display = this.checked ? 'flex' : 'none';
         });
+        
+        // 绑定选择角色按钮事件
+        const selectCharsBtn = document.getElementById('setting-phone-control-select-chars-btn');
+        if (selectCharsBtn) {
+            selectCharsBtn.addEventListener('click', () => {
+                const char = db.characters.find(c => c.id === currentChatId);
+                if (!char) return;
+                const modal = document.getElementById('phone-control-char-select-modal');
+                const list = document.getElementById('phone-control-char-list');
+                const selectAllCb = document.getElementById('phone-control-char-select-all');
+                if (!modal || !list) return;
+                
+                list.innerHTML = '';
+                const visibleIds = char.phoneControlVisibleCharIds || [];
+                const otherChars = (db.characters || []).filter(c => c.id !== char.id);
+                
+                if (otherChars.length === 0) {
+                    list.innerHTML = '<div style="color:#999;text-align:center;padding:20px;">没有其他角色可选</div>';
+                } else {
+                    let allChecked = true;
+                    otherChars.forEach(c => {
+                        const isChecked = visibleIds.includes(c.id);
+                        if (!isChecked) allChecked = false;
+                        
+                        const label = document.createElement('label');
+                        label.style.cssText = 'display:flex; align-items:center; gap:8px; padding:8px; border-bottom:1px solid #eee; cursor:pointer;';
+                        
+                        const cb = document.createElement('input');
+                        cb.type = 'checkbox';
+                        cb.value = c.id;
+                        cb.className = 'phone-control-char-cb';
+                        cb.checked = isChecked;
+                        cb.style.margin = '0';
+                        
+                        const img = document.createElement('img');
+                        img.src = c.avatar || 'https://i.postimg.cc/GtbTnxhP/o-o-1.jpg';
+                        img.style.cssText = 'width:30px; height:30px; border-radius:50%; object-fit:cover;';
+                        
+                        const nameSpan = document.createElement('span');
+                        nameSpan.textContent = c.remarkName || c.realName || '未知';
+                        nameSpan.style.flex = '1';
+                        
+                        label.appendChild(cb);
+                        label.appendChild(img);
+                        label.appendChild(nameSpan);
+                        list.appendChild(label);
+                        
+                        cb.addEventListener('change', () => {
+                            const cbs = Array.from(list.querySelectorAll('.phone-control-char-cb'));
+                            if (selectAllCb) selectAllCb.checked = cbs.every(x => x.checked);
+                        });
+                    });
+                    if (selectAllCb) selectAllCb.checked = otherChars.length > 0 && allChecked;
+                }
+                
+                modal.style.display = 'flex';
+            });
+        }
+        
+        const selectAllCb = document.getElementById('phone-control-char-select-all');
+        if (selectAllCb) {
+            selectAllCb.addEventListener('change', function() {
+                const cbs = document.querySelectorAll('.phone-control-char-cb');
+                cbs.forEach(cb => cb.checked = this.checked);
+            });
+        }
+        
+        const confirmCharsBtn = document.getElementById('phone-control-char-confirm-btn');
+        if (confirmCharsBtn) {
+            confirmCharsBtn.addEventListener('click', async () => {
+                const char = db.characters.find(c => c.id === currentChatId);
+                if (!char) return;
+                const cbs = Array.from(document.querySelectorAll('.phone-control-char-cb:checked'));
+                char.phoneControlVisibleCharIds = cbs.map(cb => cb.value);
+                await saveData();
+                document.getElementById('phone-control-char-select-modal').style.display = 'none';
+                showToast('已保存可见角色设置');
+            });
+        }
+        
+        const cancelCharsBtn = document.getElementById('phone-control-char-cancel-btn');
+        if (cancelCharsBtn) {
+            cancelCharsBtn.addEventListener('click', () => {
+                document.getElementById('phone-control-char-select-modal').style.display = 'none';
+            });
+        }
+
         document.getElementById('setting-phone-control-force-close-btn') && document.getElementById('setting-phone-control-force-close-btn').addEventListener('click', () => {
             // 强制关闭前显示 token 信息
             const tokenInfoEl = document.getElementById('phone-control-close-token-info');
@@ -742,47 +907,6 @@ function setupChatSettings() {
             const modal = document.getElementById('phone-control-recycle-modal');
             if (modal) modal.style.display = 'none';
         });
-        function renderPhoneControlFolderCheckboxes(character) {
-            const container = document.getElementById('setting-phone-control-folder-checkboxes');
-            if (!container) return;
-            container.innerHTML = '';
-            const folders = db.chatFolders || [];
-            const visibleIds = (character && character.phoneControlVisibleFolderIds) ? character.phoneControlVisibleFolderIds : [];
-            if (folders.length === 0) {
-                const noFolderLabel = document.createElement('label');
-                noFolderLabel.style.cssText = 'display:flex;align-items:center;gap:4px;margin:4px 0;';
-                const noFolderCb = document.createElement('input');
-                noFolderCb.type = 'checkbox';
-                noFolderCb.value = '__no_folder__';
-                noFolderCb.checked = visibleIds.includes('__no_folder__');
-                noFolderLabel.appendChild(noFolderCb);
-                noFolderLabel.appendChild(document.createTextNode('未分组'));
-                container.appendChild(noFolderLabel);
-                container.appendChild(document.createTextNode('（暂无其他文件夹）'));
-                return;
-            }
-            const noFolderLabel = document.createElement('label');
-            noFolderLabel.style.cssText = 'display:flex;align-items:center;gap:4px;margin:4px 0;';
-            const noFolderCb = document.createElement('input');
-            noFolderCb.type = 'checkbox';
-            noFolderCb.value = '__no_folder__';
-            noFolderCb.checked = visibleIds.includes('__no_folder__');
-            noFolderLabel.appendChild(noFolderCb);
-            noFolderLabel.appendChild(document.createTextNode('未分组'));
-            container.appendChild(noFolderLabel);
-            folders.forEach(folder => {
-                const label = document.createElement('label');
-                label.style.cssText = 'display:flex;align-items:center;gap:4px;margin:4px 0;';
-                const cb = document.createElement('input');
-                cb.type = 'checkbox';
-                cb.value = folder.id;
-                cb.checked = visibleIds.includes(folder.id);
-                label.appendChild(cb);
-                label.appendChild(document.createTextNode(folder.name));
-                container.appendChild(label);
-            });
-        }
-        window.renderPhoneControlFolderCheckboxes = renderPhoneControlFolderCheckboxes;
     })();
 
     document.getElementById('link-world-book-btn').addEventListener('click', () => {
@@ -1496,6 +1620,13 @@ function loadSettingsToSidebar() {
         document.getElementById('setting-auto-reply-enabled').checked = ar.enabled || false;
         document.getElementById('setting-auto-reply-interval').value = ar.interval || 60;
 
+        // === 加载消息弹窗通知设置 ===
+        const bgToastEl = document.getElementById('setting-bg-toast-enabled');
+        if (bgToastEl) {
+            // 如果单人设置未定义，则显示全局设置的状态
+            bgToastEl.checked = e.bgToastEnabled !== undefined ? e.bgToastEnabled : (db.globalToastEnabled !== false);
+        }
+
         // === 加载免打扰时段设置 ===
         const qh = ar.quietHours || {};
         const qhEnabledEl = document.getElementById('setting-quiet-hours-enabled');
@@ -1507,10 +1638,6 @@ function loadSettingsToSidebar() {
         qhEnabledEl.addEventListener('change', () => {
             qhRangeEl.style.display = qhEnabledEl.checked ? 'block' : 'none';
         });
-
-        // === 加载后台消息弹窗通知设置 ===
-        const bgToastEl = document.getElementById('setting-bg-toast-enabled');
-        if (bgToastEl) bgToastEl.checked = e.bgToastEnabled !== false; // 默认开启
 
         document.getElementById('setting-use-real-gallery').checked = e.useRealGallery || false;
 
@@ -1540,13 +1667,12 @@ function loadSettingsToSidebar() {
             if (phoneControlOptionsEl) phoneControlOptionsEl.style.display = phoneControlEnabledEl.checked ? 'block' : 'none';
             if (phoneControlActionsEl) phoneControlActionsEl.style.display = phoneControlEnabledEl.checked ? 'flex' : 'none';
         }
-        const phoneControlFolderFilterEl = document.getElementById('setting-phone-control-folder-filter');
-        const phoneControlFolderSelectionEl = document.getElementById('setting-phone-control-folder-selection');
-        const phoneControlFolderFilterEnabledEl = document.getElementById('setting-phone-control-folder-filter-enabled');
-        if (phoneControlFolderFilterEl) phoneControlFolderFilterEl.style.display = e.phoneControlEnabled ? 'flex' : 'none';
-        if (phoneControlFolderFilterEnabledEl) phoneControlFolderFilterEnabledEl.checked = e.phoneControlFolderFilterEnabled || false;
-        if (phoneControlFolderSelectionEl) phoneControlFolderSelectionEl.style.display = (e.phoneControlEnabled && e.phoneControlFolderFilterEnabled) ? 'block' : 'none';
-        if (typeof window.renderPhoneControlFolderCheckboxes === 'function') window.renderPhoneControlFolderCheckboxes(e);
+        const phoneControlCharFilterEl = document.getElementById('setting-phone-control-char-filter');
+        const phoneControlCharSelectionEl = document.getElementById('setting-phone-control-char-selection');
+        const phoneControlCharFilterEnabledEl = document.getElementById('setting-phone-control-char-filter-enabled');
+        if (phoneControlCharFilterEl) phoneControlCharFilterEl.style.display = e.phoneControlEnabled ? 'flex' : 'none';
+        if (phoneControlCharFilterEnabledEl) phoneControlCharFilterEnabledEl.checked = e.phoneControlCharFilterEnabled || false;
+        if (phoneControlCharSelectionEl) phoneControlCharSelectionEl.style.display = (e.phoneControlEnabled && e.phoneControlCharFilterEnabled) ? 'flex' : 'none';
         if (phoneControlViewLimitEl) {
             const limit = Math.min(50, Math.max(5, parseInt(e.phoneControlViewLimit, 10) || 10));
             phoneControlViewLimitEl.value = limit;
@@ -1792,15 +1918,15 @@ async function saveSettingsFromSidebar() {
         const autoReplyIntervalInput = parseInt(document.getElementById('setting-auto-reply-interval').value, 10);
         e.autoReply.interval = isNaN(autoReplyIntervalInput) ? 60 : autoReplyIntervalInput;
 
+        // === 保存消息弹窗通知设置 ===
+        const bgToastEl = document.getElementById('setting-bg-toast-enabled');
+        if (bgToastEl) e.bgToastEnabled = bgToastEl.checked;
+
         // === 保存免打扰时段设置 ===
         if (!e.autoReply.quietHours) e.autoReply.quietHours = {};
         e.autoReply.quietHours.enabled = document.getElementById('setting-quiet-hours-enabled').checked;
         e.autoReply.quietHours.start = document.getElementById('setting-quiet-hours-start').value || '23:00';
         e.autoReply.quietHours.end = document.getElementById('setting-quiet-hours-end').value || '07:00';
-
-        // === 保存后台消息弹窗通知设置 ===
-        const bgToastEl = document.getElementById('setting-bg-toast-enabled');
-        if (bgToastEl) e.bgToastEnabled = bgToastEl.checked;
 
         e.useRealGallery = document.getElementById('setting-use-real-gallery').checked;
 
@@ -1818,12 +1944,9 @@ async function saveSettingsFromSidebar() {
         if (phoneControlEnabledCheckbox) e.phoneControlEnabled = phoneControlEnabledCheckbox.checked;
         const phoneControlViewLimitInput = document.getElementById('setting-phone-control-view-limit');
         if (phoneControlViewLimitInput) e.phoneControlViewLimit = Math.min(50, Math.max(5, parseInt(phoneControlViewLimitInput.value, 10) || 10));
-        const phoneControlFolderFilterCheckbox = document.getElementById('setting-phone-control-folder-filter-enabled');
-        if (phoneControlFolderFilterCheckbox) e.phoneControlFolderFilterEnabled = phoneControlFolderFilterCheckbox.checked;
-        const phoneControlFolderCheckboxes = document.querySelectorAll('#setting-phone-control-folder-checkboxes input[type="checkbox"]');
-        if (phoneControlFolderCheckboxes.length > 0) {
-            e.phoneControlVisibleFolderIds = Array.from(phoneControlFolderCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
-        }
+        const phoneControlCharFilterCheckbox = document.getElementById('setting-phone-control-char-filter-enabled');
+        if (phoneControlCharFilterCheckbox) e.phoneControlCharFilterEnabled = phoneControlCharFilterCheckbox.checked;
+        // phoneControlVisibleCharIds 的保存将在弹窗确认时直接操作 db 并触发 saveData，这里无需额外处理，只需保持状态同步
 
         await saveData();
         showToast('设置已保存！');
@@ -2140,8 +2263,22 @@ function importApiPresets() {
     inp.click();
 }
 
-// === 副API通用设置函数 ===
-var subApiDisplayNames = { summary: '总结', background: '后台活动', supplementPersona: '补齐人设', peek: '偷看手机' };
+    // 初始化全局设置项的事件
+    const globalToastEl = document.getElementById('setting-global-toast-enabled');
+    if (globalToastEl) {
+        // 加载初始状态
+        globalToastEl.checked = db.globalToastEnabled !== false; // 默认开启
+        
+        // 绑定修改事件
+        globalToastEl.addEventListener('change', async (e) => {
+            db.globalToastEnabled = e.target.checked;
+            await saveData();
+            showToast('全局设置已保存');
+        });
+    }
+
+    // === 副API通用设置函数 ===
+    var subApiDisplayNames = { summary: '总结', background: '后台活动', supplementPersona: '补齐人设', peek: '偷看手机' };
 function setupSubApiSettings(prefix, dbKey, presetsKey) {
     const displayName = subApiDisplayNames[prefix] || prefix;
     const providerEl = document.getElementById(`${prefix}-api-provider`);
@@ -3277,6 +3414,7 @@ function setupWallpaperApp() {
     }
     // 音乐播放器壁纸（在壁纸APP中管理）
     setupMusicWallpaperInWallpaperScreen();
+    // 顶栏自定义
     setupTopbarCustomization();
 }
 
@@ -3370,196 +3508,173 @@ function setupMusicWallpaperInWallpaperScreen() {
     }
 }
 
+// 顶栏自定义设置
+const TOPBAR_STORAGE_KEYS = {
+    bgColor: 'ovo_topbar_bg_color',
+    bgOpacity: 'ovo_topbar_bg_opacity',
+    textColor: 'ovo_topbar_text_color',
+    borderEnabled: 'ovo_topbar_border_enabled'
+};
+
+function getTopbarSetting(key) {
+    try {
+        const defaults = {
+            bgColor: '#ffffff',
+            bgOpacity: '100',
+            textColor: '#000000',
+            borderEnabled: 'true'
+        };
+        return localStorage.getItem(TOPBAR_STORAGE_KEYS[key]) || defaults[key];
+    } catch (_) {
+        const defaults = {
+            bgColor: '#ffffff',
+            bgOpacity: '100',
+            textColor: '#000000',
+            borderEnabled: 'true'
+        };
+        return defaults[key];
+    }
+}
+
+function setTopbarSetting(key, value) {
+    try {
+        localStorage.setItem(TOPBAR_STORAGE_KEYS[key], value);
+    } catch (_) {}
+}
+
+function applyTopbarStyle() {
+    const styleId = 'ovo-custom-topbar-style';
+    let styleEl = document.getElementById(styleId);
+    
+    const bgColor = getTopbarSetting('bgColor');
+    const opacity = getTopbarSetting('bgOpacity');
+    const textColor = getTopbarSetting('textColor');
+    const borderEnabled = getTopbarSetting('borderEnabled') === 'true';
+    
+    const opacityValue = parseInt(opacity) / 100;
+    
+    // 将 hex 颜色转换为 rgba
+    const r = parseInt(bgColor.slice(1, 3), 16);
+    const g = parseInt(bgColor.slice(3, 5), 16);
+    const b = parseInt(bgColor.slice(5, 7), 16);
+    
+    const css = `
+        .app-header {
+            background: rgba(${r}, ${g}, ${b}, ${opacityValue}) !important;
+            color: ${textColor} !important;
+            ${borderEnabled ? 'border-bottom: 1px solid rgba(0, 0, 0, 0.1);' : 'border-bottom: none !important;'}
+        }
+        .app-header .title,
+        .app-header h1 {
+            color: ${textColor} !important;
+        }
+        .app-header .back-btn,
+        .app-header button {
+            color: ${textColor} !important;
+        }
+    `;
+    
+    if (!styleEl) {
+        styleEl = document.createElement('style');
+        styleEl.id = styleId;
+        document.head.appendChild(styleEl);
+    }
+    styleEl.textContent = css;
+}
+
 function setupTopbarCustomization() {
-    const TOPBAR_BG_COLOR_KEY = 'topbar_bg_color';
-    const TOPBAR_BG_OPACITY_KEY = 'topbar_bg_opacity';
-    const TOPBAR_TEXT_COLOR_KEY = 'topbar_text_color';
-    const TOPBAR_SHOW_BORDER_KEY = 'topbar_show_border';
-
-    const bgColorPicker = document.getElementById('topbar-bg-color');
-    const bgColorHex = document.getElementById('topbar-bg-color-hex');
-    const bgOpacitySlider = document.getElementById('topbar-bg-opacity');
-    const bgOpacityValue = document.getElementById('topbar-bg-opacity-value');
-    const textColorPicker = document.getElementById('topbar-text-color');
-    const textColorHex = document.getElementById('topbar-text-color-hex');
-    const showBorderCheck = document.getElementById('topbar-show-border');
+    const bgPicker = document.getElementById('topbar-bg-color-picker');
+    const bgHex = document.getElementById('topbar-bg-color-hex');
+    const textPicker = document.getElementById('topbar-text-color-picker');
+    const textHex = document.getElementById('topbar-text-color-hex');
+    const opacitySlider = document.getElementById('topbar-bg-opacity-slider');
+    const opacityValue = document.getElementById('topbar-bg-opacity-value');
+    const borderToggle = document.getElementById('topbar-border-toggle');
     const resetBtn = document.getElementById('topbar-reset-btn');
-
-    // 默认值
-    const defaults = {
-        bgColor: '#ffffff',
-        bgOpacity: 100,
-        textColor: '#000000',
-        showBorder: true
-    };
-
-    // 加载保存的设置
-    function loadSettings() {
-        try {
-            return {
-                bgColor: localStorage.getItem(TOPBAR_BG_COLOR_KEY) || defaults.bgColor,
-                bgOpacity: parseInt(localStorage.getItem(TOPBAR_BG_OPACITY_KEY)) || defaults.bgOpacity,
-                textColor: localStorage.getItem(TOPBAR_TEXT_COLOR_KEY) || defaults.textColor,
-                showBorder: localStorage.getItem(TOPBAR_SHOW_BORDER_KEY) !== 'false'
-            };
-        } catch (_) {
-            return defaults;
-        }
-    }
-
-    // 保存设置
-    function saveSettings(settings) {
-        try {
-            localStorage.setItem(TOPBAR_BG_COLOR_KEY, settings.bgColor);
-            localStorage.setItem(TOPBAR_BG_OPACITY_KEY, settings.bgOpacity.toString());
-            localStorage.setItem(TOPBAR_TEXT_COLOR_KEY, settings.textColor);
-            localStorage.setItem(TOPBAR_SHOW_BORDER_KEY, settings.showBorder.toString());
-        } catch (_) {}
-    }
-
-    // 应用样式到所有顶栏
-    function applyTopbarStyles(settings) {
-        const styleId = 'topbar-custom-style';
-        let styleEl = document.getElementById(styleId);
-        if (!styleEl) {
-            styleEl = document.createElement('style');
-            styleEl.id = styleId;
-            document.head.appendChild(styleEl);
-        }
-
-        const opacity = settings.bgOpacity / 100;
-        const rgbaMatch = settings.bgColor.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
-        let bgColorWithOpacity = settings.bgColor;
-        if (rgbaMatch) {
-            const r = parseInt(rgbaMatch[1], 16);
-            const g = parseInt(rgbaMatch[2], 16);
-            const b = parseInt(rgbaMatch[3], 16);
-            bgColorWithOpacity = `rgba(${r}, ${g}, ${b}, ${opacity})`;
-        }
-
-        const borderStyle = settings.showBorder ? '' : 'border-bottom: none !important;';
-
-        styleEl.textContent = `
-            .app-header {
-                background: ${bgColorWithOpacity} !important;
-                color: ${settings.textColor} !important;
-                ${borderStyle}
-            }
-            .app-header .title,
-            .app-header .back-btn,
-            .app-header .action-btn,
-            .app-header .subtitle {
-                color: ${settings.textColor} !important;
-            }
-            .app-header .action-btn svg {
-                stroke: ${settings.textColor} !important;
-            }
-        `;
-    }
-
-    // 初始化界面
-    function initUI() {
-        const settings = loadSettings();
-        
-        if (bgColorPicker) bgColorPicker.value = settings.bgColor;
-        if (bgColorHex) bgColorHex.value = settings.bgColor;
-        if (bgOpacitySlider) bgOpacitySlider.value = settings.bgOpacity;
-        if (bgOpacityValue) bgOpacityValue.textContent = settings.bgOpacity + '%';
-        if (textColorPicker) textColorPicker.value = settings.textColor;
-        if (textColorHex) textColorHex.value = settings.textColor;
-        if (showBorderCheck) showBorderCheck.checked = settings.showBorder;
-
-        applyTopbarStyles(settings);
-    }
-
-    // 背景颜色选择器
-    if (bgColorPicker) {
-        bgColorPicker.addEventListener('input', function() {
-            if (bgColorHex) bgColorHex.value = this.value;
-            const settings = loadSettings();
-            settings.bgColor = this.value;
-            saveSettings(settings);
-            applyTopbarStyles(settings);
+    
+    // 初始化值
+    if (bgPicker) bgPicker.value = getTopbarSetting('bgColor');
+    if (bgHex) bgHex.value = getTopbarSetting('bgColor');
+    if (textPicker) textPicker.value = getTopbarSetting('textColor');
+    if (textHex) textHex.value = getTopbarSetting('textColor');
+    if (opacitySlider) opacitySlider.value = getTopbarSetting('bgOpacity');
+    if (opacityValue) opacityValue.textContent = getTopbarSetting('bgOpacity') + '%';
+    if (borderToggle) borderToggle.checked = getTopbarSetting('borderEnabled') === 'true';
+    
+    // 应用初始样式
+    applyTopbarStyle();
+    
+    // 背景颜色同步
+    if (bgPicker && bgHex) {
+        bgPicker.addEventListener('input', function() {
+            bgHex.value = this.value;
+            setTopbarSetting('bgColor', this.value);
+            applyTopbarStyle();
         });
-    }
-
-    // 背景颜色 Hex 输入
-    if (bgColorHex) {
-        bgColorHex.addEventListener('input', function() {
-            const hex = this.value.trim();
+        bgHex.addEventListener('input', function() {
+            const hex = this.value;
             if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
-                if (bgColorPicker) bgColorPicker.value = hex;
-                const settings = loadSettings();
-                settings.bgColor = hex;
-                saveSettings(settings);
-                applyTopbarStyles(settings);
+                bgPicker.value = hex;
+                setTopbarSetting('bgColor', hex);
+                applyTopbarStyle();
             }
         });
     }
-
-    // 背景透明度滑块
-    if (bgOpacitySlider) {
-        bgOpacitySlider.addEventListener('input', function() {
-            const opacity = parseInt(this.value);
-            if (bgOpacityValue) bgOpacityValue.textContent = opacity + '%';
-            const settings = loadSettings();
-            settings.bgOpacity = opacity;
-            saveSettings(settings);
-            applyTopbarStyles(settings);
+    
+    // 文字颜色同步
+    if (textPicker && textHex) {
+        textPicker.addEventListener('input', function() {
+            textHex.value = this.value;
+            setTopbarSetting('textColor', this.value);
+            applyTopbarStyle();
         });
-    }
-
-    // 文字颜色选择器
-    if (textColorPicker) {
-        textColorPicker.addEventListener('input', function() {
-            if (textColorHex) textColorHex.value = this.value;
-            const settings = loadSettings();
-            settings.textColor = this.value;
-            saveSettings(settings);
-            applyTopbarStyles(settings);
-        });
-    }
-
-    // 文字颜色 Hex 输入
-    if (textColorHex) {
-        textColorHex.addEventListener('input', function() {
-            const hex = this.value.trim();
+        textHex.addEventListener('input', function() {
+            const hex = this.value;
             if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
-                if (textColorPicker) textColorPicker.value = hex;
-                const settings = loadSettings();
-                settings.textColor = hex;
-                saveSettings(settings);
-                applyTopbarStyles(settings);
+                textPicker.value = hex;
+                setTopbarSetting('textColor', hex);
+                applyTopbarStyle();
             }
         });
     }
-
-    // 边框显示开关
-    if (showBorderCheck) {
-        showBorderCheck.addEventListener('change', function() {
-            const settings = loadSettings();
-            settings.showBorder = this.checked;
-            saveSettings(settings);
-            applyTopbarStyles(settings);
+    
+    // 透明度滑块
+    if (opacitySlider && opacityValue) {
+        opacitySlider.addEventListener('input', function() {
+            opacityValue.textContent = this.value + '%';
+            setTopbarSetting('bgOpacity', this.value);
+            applyTopbarStyle();
         });
     }
-
+    
+    // 底部边框开关
+    if (borderToggle) {
+        borderToggle.addEventListener('change', function() {
+            setTopbarSetting('borderEnabled', this.checked ? 'true' : 'false');
+            applyTopbarStyle();
+        });
+    }
+    
     // 恢复默认按钮
     if (resetBtn) {
         resetBtn.addEventListener('click', function() {
-            if (!confirm('确定要恢复默认顶栏样式吗？')) return;
+            setTopbarSetting('bgColor', '#ffffff');
+            setTopbarSetting('bgOpacity', '100');
+            setTopbarSetting('textColor', '#000000');
+            setTopbarSetting('borderEnabled', 'true');
             
-            saveSettings(defaults);
-            initUI();
+            if (bgPicker) bgPicker.value = '#ffffff';
+            if (bgHex) bgHex.value = '#ffffff';
+            if (textPicker) textPicker.value = '#000000';
+            if (textHex) textHex.value = '#000000';
+            if (opacitySlider) opacitySlider.value = '100';
+            if (opacityValue) opacityValue.textContent = '100%';
+            if (borderToggle) borderToggle.checked = true;
             
-            if (typeof showToast === 'function') {
-                showToast('已恢复默认顶栏样式');
-            }
+            applyTopbarStyle();
+            showToast('顶栏样式已恢复默认');
         });
     }
-
-    // 初始化
-    initUI();
 }
 
 function populateGlobalCssPresetSelect() {
