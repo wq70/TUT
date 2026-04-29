@@ -161,8 +161,8 @@ const DEFAULT_COT_PRESETS = [
 ];
 
 const globalSettingKeys = [
-    'apiSettings', 'summaryApiSettings', 'backgroundApiSettings', 'supplementPersonaApiSettings', 'peekApiSettings', 'wallpaper', 'homeScreenMode', 'fontUrl', 'localFontName', 'customIcons', 'customAppNames', 'namePresets',
-    'apiPresets', 'summaryApiPresets', 'backgroundApiPresets', 'supplementPersonaApiPresets', 'peekApiPresets', 'bubbleCssPresets', 'myPersonaPresets', 'globalCss',
+    'apiSettings', 'summaryApiSettings', 'backgroundApiSettings', 'supplementPersonaApiSettings', 'peekApiSettings', 'imageRecognitionEnabled', 'imageRecognitionApiSettings', 'stickerRecognitionApiSettings', 'wallpaper', 'homeScreenMode', 'fontUrl', 'localFontName', 'customIcons', 'customAppNames', 'namePresets',
+    'apiPresets', 'summaryApiPresets', 'backgroundApiPresets', 'supplementPersonaApiPresets', 'peekApiPresets', 'imageRecognitionApiPresets', 'stickerRecognitionApiPresets', 'bubbleCssPresets', 'myPersonaPresets', 'globalCss',
     'globalCssPresets', 'fontPresets', 'homeSignature', 'forumPosts', 'forumBindings', 'forumUserProfile', 'forumSettings', 'forumApiSettings', 'forumMessages', 'forumStrangerProfiles', 'forumFriendRequests', 'forumPendingRequestFromUser', 'forumAltAccounts', 'forumActiveAccountId', 'pomodoroTasks', 'pomodoroSettings', 'insWidgetSettings', 'homeWidgetSettings',
     'chatFolders', 'fontSizeScale', 'activePersonaId', 'moreProfileCardBg', 'statusBarPresets', 'regexFilterPresets', 'themeSettings', 'themePresets', 'savedKeyboardHeight',
     'globalSendSound', 'globalReceiveSound', 'globalMessageSentSound', 'globalIncomingCallSound', 'multiMsgSoundEnabled', 'soundPresets', 'galleryPresets', 'iconPresets', 'homeWidgetPresets', 'widgetWallpaperPresets', 'voicePresets',
@@ -173,12 +173,64 @@ const globalSettingKeys = [
     'theaterApiSettings', 'theaterFontSize', 'theaterFontPreset',
     'novelAiSettings', 'avatarRecognitionDetailLevel',
     'phoneControlRecycleBin', 'nodeTemplates', 'nodeSummaryText',
-    'nightModeSettings', 'homeStatusBarSettings'
+    'nightModeSettings', 'homeStatusBarSettings', 'stickerCategories',
+    'wallpaperTopbarColor', 'wallpaperBgColor', 'wallpaperBgOpacity', 'wallpaperTextColor', 'wallpaperNavBorderShow'
 ];
 if (typeof window !== 'undefined') window.globalSettingKeysForBackup = globalSettingKeys;
 
-const appVersion = "4.9";
+const appVersion = "4.26";
 const updateLog = [
+    {
+        version: "4.26",
+        date: "2026-04-26",
+        notes: [
+            "4.26更新：",
+            "1.新增用动态户生日",
+            "2.新增角色可以识别用户的表情包",
+            "3.新增角色在发送的时候也可以识别表情包的样子",
+            "4.回退之前的聊天模式，失忆应该好了吧！",
+            "5.新增联网按钮，这样模型就可以自己上网去了，如果你要问我为什么不能直接用联网模型，因为我喜欢做点无厘头的HHH",
+            "6.新增现在线下也可以更新状态栏了",
+            "7.新增接入豆包语音，不过我没试过能不能用，有问题明天再修复吧",
+            "8.新增群聊可以移除成员",
+            "9.新增群聊双语可以选择生效",
+            "",
+            "优化了一些其他部分。太细了我不写了"
+        ]
+    },
+    {
+        version: "4.25",
+        date: "2026-04-25",
+        notes: [
+            "4.25更新：",
+            "1.修复识图BUG",
+            "2.新增角色单人思维链",
+            "3.修复线下失忆的BUG",
+            "4.新增日记收藏会自动置顶的开关",
+            "5.修复亲属卡问题，现在绝对不给用户扣款了！而且角色也能感知到扣款",
+            "6.移动记忆存到到拓展，并且新增开新档",
+            "7.新增可以手动添加日记，可以导入导出日记，可以搜索日记",
+            "8.新增表情包分类菜单，可以新建/删除/重命名",
+            "9.修复失忆的BUG",
+            "10.修复双语和引用遮挡的BUG",
+            "本来还有一些内容的，但是因为失忆暂时先端上来给大家尝尝，有问题再反馈哦",
+            "主要是之前有些反馈我忘记了……我记忆力很差TUT。"
+        ]
+    },
+    {
+        version: "4.24",
+        date: "2026-04-24",
+        notes: [
+            "4.24 更新：",
+            "这是1900老师做的更新！1900我们喜欢你！",
+            "新增： 聊天设置-关联世界书，新增线下选项，在节点系统进行线下时优先调用线下tag里绑定的世界书，若无绑定，则回退使用线上tag内绑定的世界书",
+            "优化： 日记、查手机、论坛的输出格式要求从【纯json格式】改为→**【xml标签格式】**，对api质量要求降低了很多，如先前绑定了强调json格式防止掉格式的世界书，请做出相应调整更改",
+            "提示词调整： 对于提示词做了优化，移动了聊天记录在提示词里的位置，新增了对于防句式重复的提示词",
+            "关于claude模型：",
+            "1.claude不要开思维链，模型不支持不要开",
+            "2.已修复：400报错、日记总结、查手机、论坛格式报错"
+        ]
+    },
     {
         version: "4.9",
         date: "2026-04-12",
@@ -588,6 +640,11 @@ var db = {
     supplementPersonaApiSettings: {},
     peekApiSettings: {},
     wallpaper: 'https://i.postimg.cc/W4Z9R9x4/ins-1.jpg',
+    wallpaperTopbarColor: '#000000',
+    wallpaperBgColor: '#ffffff',
+    wallpaperBgOpacity: 100,
+    wallpaperTextColor: '#333333',
+    wallpaperNavBorderShow: true,
     myStickers: [],
     homeScreenMode: 'night',
     worldBooks: [],
@@ -770,7 +827,8 @@ function initDatabase() {
                 homeWidgetSettings: data.homeWidgetSettings || defaultWidgetSettings,
             moreProfileCardBg: data.moreProfileCardBg || 'https://i.postimg.cc/XvFDdTKY/Smart-Select-20251013-023208.jpg',
             cotSettings: data.cotSettings || { enabled: false, activePresetId: 'default' },
-            cotPresets: data.cotPresets || JSON.parse(JSON.stringify(DEFAULT_COT_PRESETS))
+            cotPresets: data.cotPresets || JSON.parse(JSON.stringify(DEFAULT_COT_PRESETS)),
+            stickerCategories: data.stickerCategories || []
             };
 
             const settingsPromises = Object.entries(settingsToMigrate).map(([key, value]) =>
@@ -855,7 +913,15 @@ const loadData = async () => {
             backgroundApiSettings: {},
             supplementPersonaApiSettings: {},
             peekApiSettings: {},
+            imageRecognitionEnabled: false,
+            imageRecognitionApiSettings: {},
+            stickerRecognitionApiSettings: {},
             wallpaper: 'https://i.postimg.cc/W4Z9R9x4/ins-1.jpg',
+            wallpaperTopbarColor: '#000000',
+            wallpaperBgColor: '#ffffff',
+            wallpaperBgOpacity: 100,
+            wallpaperTextColor: '#333333',
+            wallpaperNavBorderShow: true,
             homeScreenMode: 'night',
             fontUrl: '',
             localFontName: '',
@@ -866,6 +932,8 @@ const loadData = async () => {
             backgroundApiPresets: [],
             supplementPersonaApiPresets: [],
             peekApiPresets: [],
+            imageRecognitionApiPresets: [],
+            stickerRecognitionApiPresets: [],
             bubbleCssPresets: [],
             myPersonaPresets: [],
             fontPresets: [],
@@ -913,11 +981,13 @@ const loadData = async () => {
             theaterFontPreset: null,
             avatarRecognitionDetailLevel: 'detailed',
             nodeTemplates: [],
-            nodeSummaryText: '摘要'
+            nodeSummaryText: '摘要',
+            stickerCategories: []
         };
         db[key] = settings[key] !== undefined ? settings[key] : (defaultValue[key] !== undefined ? JSON.parse(JSON.stringify(defaultValue[key])) : undefined);
     });
 
+    if (!Array.isArray(db.stickerCategories)) db.stickerCategories = [];
     if (!db.piggyBank) db.piggyBank = { balance: 520, transactions: [], familyCards: [], receivedFamilyCards: [] };
     if (typeof db.piggyBank.balance !== 'number') db.piggyBank.balance = 520;
     if (!Array.isArray(db.piggyBank.transactions)) db.piggyBank.transactions = [];

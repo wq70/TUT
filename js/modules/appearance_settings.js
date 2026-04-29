@@ -4,10 +4,6 @@
 const APPEARANCE_STORAGE_KEY = 'ovo_appearance_ui_mode';
 const CUSTOM_TUTORIAL_CSS_KEY = 'ovo_custom_tutorial_css';
 const CUSTOM_TUTORIAL_CSS_ENABLED_KEY = 'ovo_custom_tutorial_css_enabled';
-const TOPBAR_BG_COLOR_KEY = 'ovo_topbar_bg_color';
-const TOPBAR_BG_OPACITY_KEY = 'ovo_topbar_bg_opacity';
-const TOPBAR_TEXT_COLOR_KEY = 'ovo_topbar_text_color';
-const TOPBAR_BORDER_ENABLED_KEY = 'ovo_topbar_border_enabled';
 
 function getAppearanceMode() {
     try {
@@ -51,62 +47,6 @@ function setCustomTutorialCssEnabled(enabled) {
     } catch (_) {}
 }
 
-function getTopbarBgColor() {
-    try {
-        return localStorage.getItem(TOPBAR_BG_COLOR_KEY) || '#ffffff';
-    } catch (_) {
-        return '#ffffff';
-    }
-}
-
-function setTopbarBgColor(color) {
-    try {
-        localStorage.setItem(TOPBAR_BG_COLOR_KEY, color);
-    } catch (_) {}
-}
-
-function getTopbarBgOpacity() {
-    try {
-        return localStorage.getItem(TOPBAR_BG_OPACITY_KEY) || '100';
-    } catch (_) {
-        return '100';
-    }
-}
-
-function setTopbarBgOpacity(opacity) {
-    try {
-        localStorage.setItem(TOPBAR_BG_OPACITY_KEY, opacity);
-    } catch (_) {}
-}
-
-function getTopbarTextColor() {
-    try {
-        return localStorage.getItem(TOPBAR_TEXT_COLOR_KEY) || '#000000';
-    } catch (_) {
-        return '#000000';
-    }
-}
-
-function setTopbarTextColor(color) {
-    try {
-        localStorage.setItem(TOPBAR_TEXT_COLOR_KEY, color);
-    } catch (_) {}
-}
-
-function isTopbarBorderEnabled() {
-    try {
-        return localStorage.getItem(TOPBAR_BORDER_ENABLED_KEY) !== 'false';
-    } catch (_) {
-        return true;
-    }
-}
-
-function setTopbarBorderEnabled(enabled) {
-    try {
-        localStorage.setItem(TOPBAR_BORDER_ENABLED_KEY, enabled ? 'true' : 'false');
-    } catch (_) {}
-}
-
 function applyCustomTutorialCss() {
     const styleId = 'ovo-custom-tutorial-style';
     let styleEl = document.getElementById(styleId);
@@ -125,46 +65,6 @@ function applyCustomTutorialCss() {
     } else if (styleEl) {
         styleEl.remove();
     }
-}
-
-function applyTopbarStyle() {
-    const styleId = 'ovo-custom-topbar-style';
-    let styleEl = document.getElementById(styleId);
-    
-    const bgColor = getTopbarBgColor();
-    const opacity = getTopbarBgOpacity();
-    const textColor = getTopbarTextColor();
-    const borderEnabled = isTopbarBorderEnabled();
-    
-    const opacityValue = parseInt(opacity) / 100;
-    
-    // 将 hex 颜色转换为 rgba
-    const r = parseInt(bgColor.slice(1, 3), 16);
-    const g = parseInt(bgColor.slice(3, 5), 16);
-    const b = parseInt(bgColor.slice(5, 7), 16);
-    
-    const css = `
-        .app-header {
-            background: rgba(${r}, ${g}, ${b}, ${opacityValue}) !important;
-            color: ${textColor} !important;
-            ${borderEnabled ? 'border-bottom: 1px solid rgba(0, 0, 0, 0.1);' : 'border-bottom: none !important;'}
-        }
-        .app-header .title,
-        .app-header h1 {
-            color: ${textColor} !important;
-        }
-        .app-header .back-btn,
-        .app-header button {
-            color: ${textColor} !important;
-        }
-    `;
-    
-    if (!styleEl) {
-        styleEl = document.createElement('style');
-        styleEl.id = styleId;
-        document.head.appendChild(styleEl);
-    }
-    styleEl.textContent = css;
 }
 
 function renderAppearanceSettingsScreen() {
@@ -258,51 +158,6 @@ function renderAppearanceSettingsScreen() {
                 </div>
             </div>
 
-            <!-- 顶栏自定义设置区 -->
-            <div class="appearance-section">
-                <div class="appearance-section-header">
-                    <h2 class="appearance-section-title">顶栏自定义</h2>
-                    <span class="appearance-section-desc">自定义顶部导航栏样式</span>
-                </div>
-                <div class="topbar-custom-area">
-                    <div class="topbar-custom-row">
-                        <label class="topbar-custom-label">背景颜色</label>
-                        <div class="topbar-color-input-group">
-                            <input type="color" id="topbar-bg-color-picker" class="topbar-color-picker" value="${getTopbarBgColor()}">
-                            <input type="text" id="topbar-bg-color-hex" class="topbar-color-hex" value="${getTopbarBgColor()}" placeholder="#ffffff" maxlength="7">
-                        </div>
-                    </div>
-                    
-                    <div class="topbar-custom-row">
-                        <label class="topbar-custom-label">背景透明度</label>
-                        <div class="topbar-slider-group">
-                            <input type="range" id="topbar-bg-opacity-slider" class="topbar-slider" min="0" max="100" value="${getTopbarBgOpacity()}">
-                            <span id="topbar-bg-opacity-value" class="topbar-slider-value">${getTopbarBgOpacity()}%</span>
-                        </div>
-                    </div>
-                    
-                    <div class="topbar-custom-row">
-                        <label class="topbar-custom-label">文字颜色</label>
-                        <div class="topbar-color-input-group">
-                            <input type="color" id="topbar-text-color-picker" class="topbar-color-picker" value="${getTopbarTextColor()}">
-                            <input type="text" id="topbar-text-color-hex" class="topbar-color-hex" value="${getTopbarTextColor()}" placeholder="#000000" maxlength="7">
-                        </div>
-                    </div>
-                    
-                    <div class="topbar-custom-row">
-                        <label class="topbar-custom-label">底部边框</label>
-                        <label class="topbar-switch">
-                            <input type="checkbox" id="topbar-border-toggle" ${isTopbarBorderEnabled() ? 'checked' : ''}>
-                            <span class="topbar-switch-slider"></span>
-                        </label>
-                    </div>
-                    
-                    <div class="topbar-btn-row">
-                        <button type="button" id="topbar-reset-btn" class="topbar-reset-btn">恢复默认</button>
-                    </div>
-                </div>
-            </div>
-
             <!-- 自定义 CSS 区 -->
             <div class="appearance-section">
                 <div class="appearance-section-header">
@@ -390,88 +245,6 @@ function renderAppearanceSettingsScreen() {
             if (typeof showToast === 'function') showToast('自定义 CSS 已清空');
         });
     }
-
-    // 顶栏自定义事件绑定
-    const topbarBgColorPicker = inner.querySelector('#topbar-bg-color-picker');
-    const topbarBgColorHex = inner.querySelector('#topbar-bg-color-hex');
-    const topbarTextPicker = inner.querySelector('#topbar-text-color-picker');
-    const topbarTextHex = inner.querySelector('#topbar-text-color-hex');
-    const topbarOpacitySlider = inner.querySelector('#topbar-bg-opacity-slider');
-    const topbarOpacityValue = inner.querySelector('#topbar-bg-opacity-value');
-    const topbarBorderToggle = inner.querySelector('#topbar-border-toggle');
-    const topbarResetBtn = inner.querySelector('#topbar-reset-btn');
-
-    // 背景颜色同步
-    if (topbarBgColorPicker && topbarBgColorHex) {
-        topbarBgColorPicker.addEventListener('input', () => {
-            topbarBgColorHex.value = topbarBgColorPicker.value;
-            setTopbarBgColor(topbarBgColorPicker.value);
-            applyTopbarStyle();
-        });
-        topbarBgColorHex.addEventListener('input', () => {
-            const hex = topbarBgColorHex.value;
-            if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
-                topbarBgColorPicker.value = hex;
-                setTopbarBgColor(hex);
-                applyTopbarStyle();
-            }
-        });
-    }
-
-    // 文字颜色同步
-    if (topbarTextPicker && topbarTextHex) {
-        topbarTextPicker.addEventListener('input', () => {
-            topbarTextHex.value = topbarTextPicker.value;
-            setTopbarTextColor(topbarTextPicker.value);
-            applyTopbarStyle();
-        });
-        topbarTextHex.addEventListener('input', () => {
-            const hex = topbarTextHex.value;
-            if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
-                topbarTextPicker.value = hex;
-                setTopbarTextColor(hex);
-                applyTopbarStyle();
-            }
-        });
-    }
-
-    // 透明度滑块
-    if (topbarOpacitySlider && topbarOpacityValue) {
-        topbarOpacitySlider.addEventListener('input', () => {
-            topbarOpacityValue.textContent = topbarOpacitySlider.value + '%';
-            setTopbarBgOpacity(topbarOpacitySlider.value);
-            applyTopbarStyle();
-        });
-    }
-
-    // 底部边框开关
-    if (topbarBorderToggle) {
-        topbarBorderToggle.addEventListener('change', () => {
-            setTopbarBorderEnabled(topbarBorderToggle.checked);
-            applyTopbarStyle();
-        });
-    }
-
-    // 恢复默认按钮
-    if (topbarResetBtn) {
-        topbarResetBtn.addEventListener('click', () => {
-            setTopbarBgColor('#ffffff');
-            setTopbarBgOpacity('100');
-            setTopbarTextColor('#000000');
-            setTopbarBorderEnabled(true);
-            
-            if (topbarBgColorPicker) topbarBgColorPicker.value = '#ffffff';
-            if (topbarBgColorHex) topbarBgColorHex.value = '#ffffff';
-            if (topbarTextPicker) topbarTextPicker.value = '#000000';
-            if (topbarTextHex) topbarTextHex.value = '#000000';
-            if (topbarOpacitySlider) topbarOpacitySlider.value = '100';
-            if (topbarOpacityValue) topbarOpacityValue.textContent = '100%';
-            if (topbarBorderToggle) topbarBorderToggle.checked = true;
-            
-            applyTopbarStyle();
-            if (typeof showToast === 'function') showToast('顶栏样式已恢复默认');
-        });
-    }
 }
 
 (function initAppearanceSettings() {
@@ -480,7 +253,6 @@ function renderAppearanceSettingsScreen() {
         if (!screen || screen.querySelector('.appearance-settings-inner')) return;
         renderAppearanceSettingsScreen();
         applyCustomTutorialCss();
-        applyTopbarStyle();
     }
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', injectWhenReady);
