@@ -1,8 +1,18 @@
 // --- 核心聊天逻辑 (js/chat.js) ---
 // 此文件保留核心入口和胶水代码，具体功能已拆分至 js/modules/chat_*.js
 
+async function saveCurrentChat() {
+    if (currentChatType === 'group') {
+        await saveGroup(currentChatId);
+    } else {
+        await saveCharacter(currentChatId);
+    }
+}
+
 function setupChatRoom() {
     const memoryJournalBtn = document.getElementById('memory-journal-btn');
+    const memoryTableBtn = document.getElementById('memory-table-btn');
+    const vectorMemoryBtn = document.getElementById('vector-memory-btn');
     const deleteHistoryBtn = document.getElementById('delete-history-btn');
     const captureBtn = document.getElementById('capture-btn');
     const toggleExpansionBtn = document.getElementById('toggle-expansion-btn');
@@ -226,6 +236,40 @@ function setupChatRoom() {
             renderJournalList();
             switchScreen('memory-journal-screen');
             showPanel('none'); 
+        });
+    }
+
+    if (memoryTableBtn) {
+        memoryTableBtn.addEventListener('click', () => {
+            if (currentChatType !== 'private') {
+                showToast('结构化记忆暂时只支持单角色私聊');
+                showPanel('none');
+                return;
+            }
+            if (typeof renderMemoryTableScreen === 'function') {
+                renderMemoryTableScreen();
+                switchScreen('memory-table-screen');
+            } else {
+                showToast('结构化记忆模块未加载');
+            }
+            showPanel('none');
+        });
+    }
+
+    if (vectorMemoryBtn) {
+        vectorMemoryBtn.addEventListener('click', () => {
+            if (currentChatType !== 'private') {
+                showToast('向量记忆暂时只支持单角色私聊');
+                showPanel('none');
+                return;
+            }
+            if (typeof renderVectorMemoryScreen === 'function') {
+                renderVectorMemoryScreen();
+                switchScreen('vector-memory-screen');
+            } else {
+                showToast('向量记忆模块未加载');
+            }
+            showPanel('none');
         });
     }
 
@@ -607,7 +651,7 @@ function openChatRoom(chatId, type) {
 
     if (chat.unreadCount && chat.unreadCount > 0) {
         chat.unreadCount = 0;
-        saveData();
+        saveCurrentChat();
         renderChatList(); 
     }
     exitMultiSelectMode();
@@ -660,6 +704,10 @@ function openChatRoom(chatId, type) {
     const journalBtnLabel = document.querySelector('#memory-journal-btn .expansion-item-name');
     if (journalBtnLabel) {
         journalBtnLabel.textContent = (type === 'group') ? '总结' : '日记';
+    }
+    const memoryTableBtn = document.getElementById('memory-table-btn');
+    if (memoryTableBtn) {
+        memoryTableBtn.style.display = type === 'private' ? '' : 'none';
     }
 
     const starBtn = document.getElementById('char-status-btn');
@@ -821,7 +869,7 @@ async function sendMessage() {
         promptForBackupIfNeeded('history_milestone');
     }
 
-    await saveData();
+    await saveCurrentChat();
     renderChatList();
 
     if (currentQuoteInfo) {
@@ -1061,7 +1109,7 @@ async function deleteSelectedStatusSlides() {
         char.statusPanel.currentStatusRaw = '';
     }
 
-    await saveData();
+    await saveCurrentChat();
 
     // 退出多选模式并关闭面板
     exitStatusMultiSelect();

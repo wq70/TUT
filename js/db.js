@@ -162,24 +162,43 @@ const DEFAULT_COT_PRESETS = [
 ];
 
 const globalSettingKeys = [
-    'apiSettings', 'summaryApiSettings', 'backgroundApiSettings', 'supplementPersonaApiSettings', 'peekApiSettings', 'imageRecognitionEnabled', 'imageRecognitionApiSettings', 'stickerRecognitionApiSettings', 'wallpaper', 'globalChatWallpaper', 'globalCallWallpaper', 'homeScreenMode', 'fontUrl', 'localFontName', 'customIcons', 'customAppNames', 'namePresets',
-    'apiPresets', 'summaryApiPresets', 'backgroundApiPresets', 'supplementPersonaApiPresets', 'peekApiPresets', 'imageRecognitionApiPresets', 'stickerRecognitionApiPresets', 'bubbleCssPresets', 'myPersonaPresets', 'globalCss',
+    'apiSettings', 'summaryApiSettings', 'backgroundApiSettings', 'supplementPersonaApiSettings', 'peekApiSettings', 'vectorApiSettings', 'imageRecognitionEnabled', 'imageRecognitionApiSettings', 'stickerRecognitionApiSettings', 'wallpaper', 'globalChatWallpaper', 'globalCallWallpaper', 'homeScreenMode', 'fontUrl', 'localFontName', 'customIcons', 'customAppNames', 'namePresets',
+    'apiPresets', 'summaryApiPresets', 'backgroundApiPresets', 'supplementPersonaApiPresets', 'peekApiPresets', 'vectorApiPresets', 'imageRecognitionApiPresets', 'stickerRecognitionApiPresets', 'bubbleCssPresets', 'myPersonaPresets', 'globalCss',
     'globalCssPresets', 'fontPresets', 'homeSignature', 'forumPosts', 'forumBindings', 'forumUserProfile', 'forumSettings', 'forumApiSettings', 'forumMessages', 'forumStrangerProfiles', 'forumFriendRequests', 'forumPendingRequestFromUser', 'forumAltAccounts', 'forumActiveAccountId', 'pomodoroTasks', 'pomodoroSettings', 'insWidgetSettings', 'homeWidgetSettings',
     'chatFolders', 'fontSizeScale', 'activePersonaId', 'moreProfileCardBg', 'statusBarPresets', 'regexFilterPresets', 'themeSettings', 'themePresets', 'savedKeyboardHeight',
-    'globalSendSound', 'globalReceiveSound', 'globalMessageSentSound', 'globalIncomingCallSound', 'multiMsgSoundEnabled', 'soundPresets', 'galleryPresets', 'iconPresets', 'homeWidgetPresets', 'widgetWallpaperPresets', 'voicePresets',
+    'globalSendSound', 'globalReceiveSound', 'globalMessageSentSound', 'globalIncomingCallSound', 'multiMsgSoundEnabled', 'soundPresets', 'galleryPresets', 'iconPresets', 'homeWidgetPresets', 'widgetWallpaperPresets', 'voicePresets', 'fontBuffer',
     'cotSettings', 'cotPresets', 'hasSeenVideoCallDisclaimer', 'hasSeenVideoCallAvatarHint',
     'favorites', 'piggyBank',
     'theaterScenarios', 'theaterPromptPresets',
     'theaterHtmlScenarios', 'theaterHtmlPromptPresets', 'theaterMode',
     'theaterApiSettings', 'theaterFontSize', 'theaterFontPreset',
-    'novelAiSettings', 'avatarRecognitionDetailLevel',
-    'phoneControlRecycleBin', 'nodeTemplates', 'nodeSummaryText',
+    'novelAiSettings', 'imageGenerationEngine', 'gptImageSettings', 'gptImagePresets', 'avatarRecognitionDetailLevel',
+    'phoneControlRecycleBin', 'nodeTemplates', 'nodeSummaryText', 'memoryTableTemplates', 'vectorMemoryTemplates',
     'nightModeSettings', 'homeStatusBarSettings', 'stickerCategories', 'magicRoom'
 ];
 if (typeof window !== 'undefined') window.globalSettingKeysForBackup = globalSettingKeys;
 
-const appVersion = "5.1";
+const appVersion = "6.8";
 const updateLog = [
+    {
+        version: "6.8",
+        date: "2026-06-08",
+        notes: [
+            "6.8更新（上）：",
+            "1.优化存储",
+            "2.优化收藏日记置顶的功能",
+            "3.修复表情包掉格式的问题",
+            "4.重构整个自动总结",
+            "5.新增两个总结按钮",
+            "6.新增结构化记忆",
+            "7.新增向量记忆",
+            "8.新增系统级通知在聊天详情页面也能收到通知的",
+            "9.优化了本地字体的上传，方法来自1900老师",
+            "10.新增单独保活",
+            "11.新增给NOVEL生图新增自定义API地址和预设管理",
+            "12.新增GPT生图（生图成功版）"
+        ]
+    },
     {
         version: "5.1",
         date: "2026-05-01",
@@ -663,6 +682,7 @@ var db = {
     backgroundApiSettings: {},
     supplementPersonaApiSettings: {},
     peekApiSettings: {},
+    vectorApiSettings: {},
     wallpaper: 'https://i.postimg.cc/W4Z9R9x4/ins-1.jpg',
     globalChatWallpaper: '',
     globalCallWallpaper: '',
@@ -678,6 +698,7 @@ var db = {
     backgroundApiPresets: [],
     supplementPersonaApiPresets: [],
     peekApiPresets: [],
+    vectorApiPresets: [],
     bubbleCssPresets: [],
     myPersonaPresets: [],
     fontPresets: [],
@@ -758,7 +779,9 @@ var db = {
     cotPresets: JSON.parse(JSON.stringify(DEFAULT_COT_PRESETS)),
     archives: [],
     favorites: [],  // 消息收藏：{ id, messageId, chatId, chatType, chatName, content, timestamp, favoriteTime, note, sender }
-    phoneControlRecycleBin: []  // 角色掌控模式：被角色“删除”的角色移入回收站，可恢复
+    phoneControlRecycleBin: [],  // 角色掌控模式：被角色“删除”的角色移入回收站，可恢复
+    memoryTableTemplates: [],
+    vectorMemoryTemplates: []
 };
 
 var currentChatId = null;
@@ -827,15 +850,18 @@ function initDatabase() {
                 apiSettings: data.apiSettings || {},
                 summaryApiSettings: data.summaryApiSettings || {},
                 backgroundApiSettings: data.backgroundApiSettings || {},
+                vectorApiSettings: data.vectorApiSettings || {},
                 wallpaper: data.wallpaper || 'https://i.postimg.cc/W4Z9R9x4/ins-1.jpg',
                 globalChatWallpaper: data.globalChatWallpaper || '',
-                homeScreenMode: data.homeScreenMode || 'night',
-                fontUrl: data.fontUrl || '',
-                localFontName: data.localFontName || '',
+            homeScreenMode: data.homeScreenMode || 'night',
+            fontUrl: data.fontUrl || '',
+            localFontName: data.localFontName || '',
+            fontBuffer: data.fontBuffer || null,
                 customIcons: data.customIcons || {},
                 apiPresets: data.apiPresets || [],
                 summaryApiPresets: data.summaryApiPresets || [],
                 backgroundApiPresets: data.backgroundApiPresets || [],
+                vectorApiPresets: data.vectorApiPresets || [],
                 bubbleCssPresets: data.bubbleCssPresets || [],
                 myPersonaPresets: data.myPersonaPresets || [],
                 globalCss: data.globalCss || '',
@@ -847,10 +873,15 @@ function initDatabase() {
                 pomodoroSettings: data.pomodoroSettings || { boundCharId: null, userPersona: '', focusBackground: '', taskCardBackground: '', encouragementMinutes: 25, pokeLimit: 5, globalWorldBookIds: [] },
                 insWidgetSettings: data.insWidgetSettings || { avatar1: 'https://i.postimg.cc/Y96LPskq/o-o-2.jpg', bubble1: 'love u.', avatar2: 'https://i.postimg.cc/GtbTnxhP/o-o-1.jpg', bubble2: 'miss u.' },
                 homeWidgetSettings: data.homeWidgetSettings || defaultWidgetSettings,
+                memoryTableTemplates: data.memoryTableTemplates || [],
+                vectorMemoryTemplates: data.vectorMemoryTemplates || [],
             moreProfileCardBg: data.moreProfileCardBg || 'https://i.postimg.cc/XvFDdTKY/Smart-Select-20251013-023208.jpg',
             cotSettings: data.cotSettings || { enabled: false, activePresetId: 'default' },
             cotPresets: data.cotPresets || JSON.parse(JSON.stringify(DEFAULT_COT_PRESETS)),
             stickerCategories: data.stickerCategories || [],
+            imageGenerationEngine: data.imageGenerationEngine || 'novelai',
+            gptImageSettings: data.gptImageSettings || {},
+            gptImagePresets: data.gptImagePresets || [],
             magicRoom: Object.assign({
                 customPromptEnabled: false,
                 customPromptTemplate: '',
@@ -887,30 +918,95 @@ function initDatabase() {
 
 // 数据保存与加载
 const saveData = async () => {
-    try {
-        await dexieDB.transaction('rw', dexieDB.tables, async () => {
-            await dexieDB.characters.bulkPut(db.characters);
-            await dexieDB.groups.bulkPut(db.groups);
-            await dexieDB.worldBooks.bulkPut(db.worldBooks);
-            await dexieDB.myStickers.bulkPut(db.myStickers);
-            if (dexieDB.archives) await dexieDB.archives.bulkPut(db.archives || []);
-
-            const allSettingKeys = [...globalSettingKeys, 'worldBookCategoryOrder'];
-            const settingsPromises = allSettingKeys.map(key => {
-                if (db[key] !== undefined) {
-                    return dexieDB.globalSettings.put({ key: key, value: db[key] });
+    // 存储配额预检
+    if (navigator.storage && navigator.storage.estimate) {
+        try {
+            const { usage, quota } = await navigator.storage.estimate();
+            const pct = (usage / quota) * 100;
+            if (pct > 95) {
+                if (typeof showToast === 'function') {
+                    showToast(`⚠️ 存储空间已使用 ${pct.toFixed(0)}%，请立即导出备份！`, 6000);
                 }
-                return null;
-            }).filter(p => p);
-            await Promise.all(settingsPromises);
-        });
+            }
+        } catch (_) { /* 不阻断主流程 */ }
+    }
+
+    try {
+        await dexieDB.characters.bulkPut(db.characters);
+        await dexieDB.groups.bulkPut(db.groups);
+        await dexieDB.worldBooks.bulkPut(db.worldBooks);
+        await dexieDB.myStickers.bulkPut(db.myStickers);
+        if (dexieDB.archives) await dexieDB.archives.bulkPut(db.archives || []);
+
+        const allSettingKeys = [...globalSettingKeys, 'worldBookCategoryOrder'];
+        const settingsPromises = allSettingKeys.map(key => {
+            if (db[key] !== undefined) {
+                return dexieDB.globalSettings.put({ key: key, value: db[key] });
+            }
+            return null;
+        }).filter(p => p);
+        await Promise.all(settingsPromises);
     } catch (e) {
         console.error("saveData failed:", e);
         if (typeof showToast === 'function') {
-            showToast("保存数据失败: " + e.message);
+            // 根据错误类型给用户有意义的提示
+            const isQuota = e.name === 'QuotaExceededError'
+                || (e.message && (e.message.includes('quota') || e.message.includes('delete record')));
+            const msg = isQuota
+                ? '存储空间不足，保存失败！请到「存储管理」导出备份后清理数据。'
+                : '保存数据失败: ' + e.message;
+            showToast(msg, 6000);
         }
     }
 };
+
+/**
+ * 只保存单个角色到 IndexedDB（聊天消息写入、角色配置修改时使用）
+ * 失败时自动降级为全量 saveData
+ */
+const saveCharacter = async (characterId) => {
+    const character = db.characters.find(c => c.id === characterId);
+    if (!character) return;
+    try {
+        await dexieDB.characters.put(character);
+    } catch (e) {
+        console.error("saveCharacter failed:", e);
+    }
+};
+
+/**
+ * 只保存单个群组到 IndexedDB（群消息写入、群配置修改时使用）
+ * 失败时自动降级为全量 saveData
+ */
+const saveGroup = async (groupId) => {
+    const group = db.groups.find(g => g.id === groupId);
+    if (!group) return;
+    try {
+        await dexieDB.groups.put(group);
+    } catch (e) {
+        console.error("saveGroup failed:", e);
+    }
+};
+
+/**
+ * 只保存全局设置（apiSettings、壁纸、主题等），不写角色/群
+ */
+const saveGlobalSettings = async () => {
+    try {
+        const allSettingKeys = [...globalSettingKeys, 'worldBookCategoryOrder'];
+        const promises = allSettingKeys
+            .filter(key => db[key] !== undefined)
+            .map(key => dexieDB.globalSettings.put({ key, value: db[key] }));
+        await Promise.all(promises);
+    } catch (e) {
+        console.error("saveGlobalSettings failed:", e);
+        if (typeof showToast === 'function') showToast("保存设置失败: " + e.message);
+    }
+};
+
+window.saveCharacter = saveCharacter;
+window.saveGroup = saveGroup;
+window.saveGlobalSettings = saveGlobalSettings;
 
 const loadData = async () => {
     const tables = [
@@ -949,6 +1045,7 @@ const loadData = async () => {
             backgroundApiSettings: {},
             supplementPersonaApiSettings: {},
             peekApiSettings: {},
+            vectorApiSettings: {},
             imageRecognitionEnabled: false,
             imageRecognitionApiSettings: {},
             stickerRecognitionApiSettings: {},
@@ -958,6 +1055,7 @@ const loadData = async () => {
             homeScreenMode: 'night',
             fontUrl: '',
             localFontName: '',
+            fontBuffer: null,
             customIcons: {},
             customAppNames: {},
             apiPresets: [],
@@ -965,6 +1063,7 @@ const loadData = async () => {
             backgroundApiPresets: [],
             supplementPersonaApiPresets: [],
             peekApiPresets: [],
+            vectorApiPresets: [],
             imageRecognitionApiPresets: [],
             stickerRecognitionApiPresets: [],
             bubbleCssPresets: [],
@@ -986,6 +1085,8 @@ const loadData = async () => {
             pomodoroSettings: { boundCharId: null, userPersona: '', focusBackground: '', taskCardBackground: '', encouragementMinutes: 25, pokeLimit: 5, globalWorldBookIds: [] },
             insWidgetSettings: { avatar1: 'https://i.postimg.cc/Y96LPskq/o-o-2.jpg', bubble1: 'love u.', avatar2: 'https://i.postimg.cc/GtbTnxhP/o-o-1.jpg', bubble2: 'miss u.' },
             homeWidgetSettings: defaultWidgetSettings,
+            memoryTableTemplates: [],
+            vectorMemoryTemplates: [],
             activePersonaId: null,
             moreProfileCardBg: 'https://i.postimg.cc/XvFDdTKY/Smart-Select-20251013-023208.jpg',
             globalSendSound: '',
@@ -1013,6 +1114,9 @@ const loadData = async () => {
             theaterFontSize: 15,
         theaterFontPreset: null,
         avatarRecognitionDetailLevel: 'detailed',
+        imageGenerationEngine: 'novelai',
+        gptImageSettings: {},
+        gptImagePresets: [],
         nodeTemplates: [],
         nodeSummaryText: '摘要',
         stickerCategories: [],
@@ -1022,6 +1126,7 @@ const loadData = async () => {
             sysNotifEnabled: false,
             sysNotifSenderName: '',
             sysNotifShowAvatar: true,
+            sysNotifInChatEnabled: false,
             sysNotifShowContent: true,
             sysNotifCustomServer: false,
             sysNotifServerUrl: '',
@@ -1032,6 +1137,8 @@ const loadData = async () => {
 });
 
     if (!Array.isArray(db.stickerCategories)) db.stickerCategories = [];
+    if (!Array.isArray(db.vectorMemoryTemplates)) db.vectorMemoryTemplates = [];
+    if (!Array.isArray(db.vectorApiPresets)) db.vectorApiPresets = [];
     if (!db.piggyBank) db.piggyBank = { balance: 520, transactions: [], familyCards: [], receivedFamilyCards: [] };
     if (typeof db.piggyBank.balance !== 'number') db.piggyBank.balance = 520;
     if (!Array.isArray(db.piggyBank.transactions)) db.piggyBank.transactions = [];
@@ -1073,6 +1180,51 @@ const loadData = async () => {
                 history: []
             };
         }
+        if (!['journal', 'table', 'vector'].includes(c.memoryMode)) c.memoryMode = 'journal';
+        if (!c.memoryTables || typeof c.memoryTables !== 'object') {
+            c.memoryTables = {
+                enabled: true,
+                boundTemplateIds: [],
+                data: {},
+                lockedFields: {},
+                history: [],
+                lastChangedFieldPaths: []
+            };
+        }
+        if (!Array.isArray(c.memoryTables.boundTemplateIds)) c.memoryTables.boundTemplateIds = [];
+        if (!c.memoryTables.data || typeof c.memoryTables.data !== 'object') c.memoryTables.data = {};
+        if (!c.memoryTables.lockedFields || typeof c.memoryTables.lockedFields !== 'object') c.memoryTables.lockedFields = {};
+        if (!Array.isArray(c.memoryTables.history)) c.memoryTables.history = [];
+        if (!Array.isArray(c.memoryTables.lastChangedFieldPaths)) c.memoryTables.lastChangedFieldPaths = [];
+        if (!c.vectorMemory || typeof c.vectorMemory !== 'object') {
+            c.vectorMemory = {
+                enabled: true,
+                boundTemplateId: null,
+                entries: [],
+                history: [],
+                topK: 5,
+                threshold: 0.28,
+                autoSummaryEnabled: false,
+                autoSummaryInterval: 200,
+                autoSummaryState: 'idle',
+                autoSummaryPending: false,
+                lastSummarizedMsgId: null,
+                lastSummarizedMsgTimestamp: null,
+                lastContextBlock: '',
+                lastRetrievedEntryIds: [],
+                lastQueryText: '',
+                lastPreparedAt: null
+            };
+        }
+        if (!Array.isArray(c.vectorMemory.entries)) c.vectorMemory.entries = [];
+        if (!Array.isArray(c.vectorMemory.history)) c.vectorMemory.history = [];
+        if (c.vectorMemory.topK === undefined) c.vectorMemory.topK = 5;
+        if (c.vectorMemory.threshold === undefined) c.vectorMemory.threshold = 0.28;
+        if (c.vectorMemory.autoSummaryEnabled === undefined) c.vectorMemory.autoSummaryEnabled = false;
+        if (!Number.isFinite(parseInt(c.vectorMemory.autoSummaryInterval, 10))) c.vectorMemory.autoSummaryInterval = 200;
+        if (!c.vectorMemory.autoSummaryState) c.vectorMemory.autoSummaryState = 'idle';
+        if (c.vectorMemory.autoSummaryPending === undefined) c.vectorMemory.autoSummaryPending = false;
+        if (!Array.isArray(c.vectorMemory.lastRetrievedEntryIds)) c.vectorMemory.lastRetrievedEntryIds = [];
         if (!c.regexFilter) {
             c.regexFilter = {
                 enabled: false,
@@ -1215,6 +1367,7 @@ const dataStorage = {
         categorizedSizes.personalization += stringify(db.homeScreenMode);
         categorizedSizes.personalization += stringify(db.fontUrl);
         categorizedSizes.personalization += stringify(db.localFontName);
+        categorizedSizes.personalization += stringify(db.fontBuffer);
         categorizedSizes.personalization += stringify(db.customIcons);
         categorizedSizes.personalization += stringify(db.bubbleCssPresets);
         categorizedSizes.personalization += stringify(db.myPersonaPresets);

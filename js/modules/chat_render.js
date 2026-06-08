@@ -1156,16 +1156,22 @@ const contentMatch = content.match(/^\[.*?(?:消息|回复)[：:]([\s\S]+)\]$/);
             bubbleElement.className = 'image-bubble';
             bubbleElement.innerHTML = `<img src="${realPhotoUrl}" alt="${pvContent}" onclick="openImageViewer(this.src)" style="cursor: zoom-in;">`;
         } else {
-            // === NovelAI 自动生图逻辑 ===
-            const _naiEnabled = db.novelAiSettings && db.novelAiSettings.enabled && db.novelAiSettings.token;
+            // === 自动生图逻辑 (NovelAI 或 GPT) ===
+            const engine = db.imageGenerationEngine || 'novelai';
+            let _imgEnabled = false;
+            if (engine === 'gpt') {
+                _imgEnabled = db.gptImageSettings && db.gptImageSettings.enabled && db.gptImageSettings.url && db.gptImageSettings.key;
+            } else {
+                _imgEnabled = db.novelAiSettings && db.novelAiSettings.enabled && db.novelAiSettings.token;
+            }
             
             if (message.novelAiImageUrl) {
-                // 已有生成好的图片（即使 NovelAI 已关闭也显示已生成的图片）
+                // 已有生成好的图片（即使生图已关闭也显示已生成的图片）
                 bubbleElement = document.createElement('div');
                 bubbleElement.className = 'image-bubble';
                 bubbleElement.innerHTML = `<img src="${message.novelAiImageUrl}" alt="${pvContent}" onclick="openImageViewer(this.src)" style="cursor: zoom-in; max-width: 280px; border-radius: 12px;">`;
-            } else if (_naiEnabled && !isSent && _naiAutoGenNewMsgIds.has(message.id)) {
-                // NovelAI 已启用，角色发的新照片消息，触发自动生成
+            } else if (_imgEnabled && !isSent && _naiAutoGenNewMsgIds.has(message.id)) {
+                // 生图已启用，角色发的新照片消息，触发自动生成
                 bubbleElement = document.createElement('div');
                 bubbleElement.className = 'image-bubble nai-generating';
                 bubbleElement.innerHTML = `
@@ -1192,8 +1198,8 @@ const contentMatch = content.match(/^\[.*?(?:消息|回复)[：:]([\s\S]+)\]$/);
                             naiPrompt = _pvContent;
                         }
                         
-                        console.log('[NovelAI Auto] 为消息生图, prompt:', naiPrompt);
-                        const result = await generateNovelAiImage(naiPrompt);
+                        console.log('[Image Auto] 为消息生图, prompt:', naiPrompt);
+                        const result = await generateImageDispatch(naiPrompt);
                         
                         if (result && result.imageUrl) {
                             // 将生成的图片保存到消息对象中
@@ -1213,7 +1219,7 @@ const contentMatch = content.match(/^\[.*?(?:消息|回复)[：:]([\s\S]+)\]$/);
                             bubbleRef.innerHTML = `<img src="${result.imageUrl}" alt="${_pvContent}" onclick="openImageViewer(this.src)" style="cursor: zoom-in; max-width: 280px; border-radius: 12px;">`;
                         }
                     } catch (err) {
-                        console.error('[NovelAI Auto] 生图失败:', err);
+                        console.error('[Image Auto] 生图失败:', err);
                         // 失败时回退为普通 pv-card
                         bubbleRef.className = 'pv-card';
                         const displayContent = _pvContent.replace(/\{\{[\s\S]+?\}\}/, '').trim();
@@ -1222,7 +1228,7 @@ const contentMatch = content.match(/^\[.*?(?:消息|回复)[：:]([\s\S]+)\]$/);
                 });
                 _naiAutoGenProcess();
             } else {
-                // NovelAI 未启用或是用户发的，显示原始 pv-card
+                // 生图未启用或是用户发的，显示原始 pv-card
                 const displayContent = pvContent.replace(/\{\{[\s\S]+?\}\}/, '').trim() || pvContent;
                 bubbleElement = document.createElement('div');
                 bubbleElement.className = 'pv-card';
@@ -1374,7 +1380,8 @@ const contentMatch = content.match(/^\[.*?(?:消息|回复)[：:]([\s\S]+)\]$/);
     } else if (message && Array.isArray(message.parts) && message.parts.length > 0 && message.parts[0].type === 'html') {
         bubbleElement = document.createElement('div');
         bubbleElement.className = `message-bubble ${isSent ? 'sent' : 'received'} html-bubble`;
-        const htmlContent = message.parts[0].text;
+        let htmlContent = message.parts[0].text;
+        htmlContent = htmlContent.replace(/<uwuxjc>/gi, '').replace(/<\/uwuxjc>/gi, '').trim();
         if (htmlContent.includes('<!DOCTYPE html>') || htmlContent.includes('<html')) {
             const processedHtml = processTemplate(htmlContent, chat);
             bubbleElement.innerHTML = `<iframe srcdoc="${processedHtml.replace(/"/g, '"')}" style="width: 100%; min-width: 250px; height: 350px; border: none; background: white; border-radius: 10px;"></iframe>`;
@@ -1607,11 +1614,73 @@ window.sendPayResponse = async function(msgId, action) {
 
 function addMessageBubble(message, targetChatId, targetChatType) {
     const isChatRoomActive = document.getElementById('chat-room-screen') && document.getElementById('chat-room-screen').classList.contains('active');
-    if (targetChatId !== currentChatId || targetChatType !== currentChatType || !isChatRoomActive) {
-        const senderChat = (targetChatType === 'private')
-            ? db.characters.find(c => c.id === targetChatId)
-            : db.groups.find(g => g.id === targetChatId);
+    const senderChat = (targetChatType === 'private')
+        ? db.characters.find(c => c.id === targetChatId)
+        : db.groups.find(g => g.id === targetChatId);
+    
+    // 如果发送方不是自己，则准备组装系统通知
+    let shouldShowSystemNotification = false;
+    let notifTitle, notifBody, notifIcon;
+    const mr = db.magicRoom || {};
+    
+    if (senderChat && message.senderId !== 'user_me') {
+        let senderName, senderAvatar;
+        if (targetChatType === 'private') {
+            senderName = senderChat.remarkName;
+            senderAvatar = senderChat.avatar;
+        } else { 
+            const sender = senderChat.members.find(m => m.id === message.senderId);
+            if (sender) {
+                senderName = sender.groupNickname;
+                senderAvatar = sender.avatar;
+            } else { 
+                senderName = senderChat.name;
+                senderAvatar = senderChat.avatar;
+            }
+        }
+
+        let previewText = message.content;
+        const textMatch = previewText.match(/\[.*?的消息[：:]([\s\S]+?)\]/);
+        if (textMatch) {
+            previewText = textMatch[1];
+        } else {
+            if (/\[.*?的表情包[：:].*?\]/.test(previewText)) previewText = '[表情包]';
+            else if (/\[.*?的语音[：:].*?\]/.test(previewText)) previewText = '[语音]';
+            else if (/\[.*?发来的照片\/视频[：:].*?\]/.test(previewText)) previewText = '[照片/视频]';
+            else if (/\[.*?的转账[：:].*?\]/.test(previewText) || /\[.*?向.*?转账[：:].*?\]/.test(previewText)) previewText = '[转账]';
+            else if (/\[(.+?)的位置[：:].*?\]/.test(previewText)) previewText = '[定位]';
+            else if (/\[.*?送来的礼物[：:].*?\]/.test(previewText)) previewText = '[礼物]';
+            else if (/\[.*?发来了一张图片[：:]\]/.test(previewText)) previewText = '[图片]';
+            else if (/\[商城订单[：:].*?\]/.test(previewText)) previewText = '[商城订单]';
+            else if (message.parts && message.parts.some(p => p.type === 'html')) previewText = '[互动]';
+        }
+
+        notifTitle = (mr.sysNotifSenderName && mr.sysNotifSenderName.trim()) ? mr.sysNotifSenderName.trim() : senderName;
+        notifBody  = mr.sysNotifShowContent !== false ? previewText.substring(0, 60) : '你有一条新消息';
+        notifIcon  = mr.sysNotifShowAvatar !== false ? senderAvatar : undefined;
         
+        // 当不在当前聊天，或者（在当前聊天且开启了页内通知）时，触发系统通知
+        if (!isChatRoomActive || targetChatId !== currentChatId || targetChatType !== currentChatType || mr.sysNotifInChatEnabled) {
+            shouldShowSystemNotification = true;
+        }
+    }
+    
+    // 如果需要发送系统级通知
+    if (shouldShowSystemNotification && mr.sysNotifEnabled && typeof showSystemNotification === 'function') {
+        showSystemNotification({ title: notifTitle, body: notifBody, icon: notifIcon });
+        if (mr.sysNotifCustomServer && mr.sysNotifServerUrl) {
+            fetch(mr.sysNotifServerUrl, {
+                method: 'POST',
+                headers: Object.assign(
+                    { 'Content-Type': 'application/json' },
+                    mr.sysNotifServerKey ? { 'Authorization': 'Bearer ' + mr.sysNotifServerKey } : {}
+                ),
+                body: JSON.stringify({ title: notifTitle, body: notifBody })
+            }).catch(() => {});
+        }
+    }
+    
+    if (targetChatId !== currentChatId || targetChatType !== currentChatType || !isChatRoomActive) {
         if (senderChat) {
             let invisibleRegex;
             if (senderChat.showStatusUpdateMsg) {
@@ -1669,25 +1738,6 @@ function addMessageBubble(message, targetChatId, targetChatType) {
                 });
             }
 
-            // === 系统级通知（魔法屋设置） ===
-            const mr = db.magicRoom || {};
-            if (mr.sysNotifEnabled && typeof showSystemNotification === 'function') {
-                const notifTitle = (mr.sysNotifSenderName && mr.sysNotifSenderName.trim()) ? mr.sysNotifSenderName.trim() : senderName;
-                const notifBody  = mr.sysNotifShowContent !== false ? previewText.substring(0, 60) : '你有一条新消息';
-                const notifIcon  = mr.sysNotifShowAvatar !== false ? senderAvatar : undefined;
-                showSystemNotification({ title: notifTitle, body: notifBody, icon: notifIcon });
-                // 如果用户配置了自定义推送服务器，额外发送一次
-                if (mr.sysNotifCustomServer && mr.sysNotifServerUrl) {
-                    fetch(mr.sysNotifServerUrl, {
-                        method: 'POST',
-                        headers: Object.assign(
-                            { 'Content-Type': 'application/json' },
-                            mr.sysNotifServerKey ? { 'Authorization': 'Bearer ' + mr.sysNotifServerKey } : {}
-                        ),
-                        body: JSON.stringify({ title: notifTitle, body: notifBody })
-                    }).catch(() => {});
-                }
-            }
         }
         return; 
     }
